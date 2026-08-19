@@ -232,7 +232,7 @@ function renderDashboard() {
             labels: ['Management', 'Communication', 'Efficacité', 'Animation', 'Performance'],
             datasets: [{
                 label: 'Progression par catégorie (%)',
-                data: [100, 60, 30, 0, 0],
+                data: [0, 0, 0, 0, 0],
                 backgroundColor: [
                     '#00afa9',
                     '#096475',
