@@ -1,0 +1,618 @@
+/* ============================================
+   Plateforme de Formation - Style
+   Palette :
+   Primary : #00afa9, #808284, #cce1e1
+   Secondary : #096475, #7200a9, #ffa900
+   Police : Mada
+   ============================================ */
+
+:root {
+    --primary: #00afa9;
+    --primary-light: #cce1e1;
+    --primary-dark: #096475;
+    --secondary-purple: #7200a9;
+    --secondary-orange: #ffa900;
+    --gray: #808284;
+    --gray-light: #f5f7f8;
+    --gray-dark: #4a4a4a;
+    --white: #ffffff;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Mada', sans-serif;
+    background: var(--gray-light);
+    color: var(--gray-dark);
+    line-height: 1.6;
+}
+
+/* ==================== ÉCRAN DE CONNEXION ==================== */
+.login-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-light) 0%, var(--white) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.login-box {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    padding: 40px;
+    width: 90%;
+    max-width: 480px;   /* Légèrement plus large */
+    text-align: center;
+}
+
+.login-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.login-logo h1 {
+    color: var(--primary-dark);
+    font-size: 2rem;
+    font-weight: 900;
+}
+
+.login-subtitle {
+    color: var(--gray);
+    margin-bottom: 25px;
+}
+
+#loginForm label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--gray-dark);
+}
+
+#loginForm input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 15px;
+    transition: border 0.3s;
+}
+
+#loginForm input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,175,169,0.15);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,175,169,0.4);
+}
+
+.login-error {
+    color: #e74c3c;
+    margin-top: 10px;
+    font-weight: 600;
+    min-height: 20px;
+}
+.login-logo-img {
+    height: 250px;   /* ajustez selon vos besoins */
+    width: auto;     /* conserve les proportions */
+}
+
+.topbar-logo-img {
+    height: 100px;      /* ou 40px, 50px selon besoin */
+    width: 100px;
+    max-height: 100px;
+    object-fit: contain; /* garde les proportions */
+}
+/* ==================== CONTENU PRINCIPAL ==================== */
+.main-app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.topbar {
+    background: var(--white);
+    box-shadow: var(--shadow);
+    padding: 0 40px;          /* suppression du padding vertical */
+    height: 80px;             /* hauteur fixe de la barre */
+    display: flex;
+    align-items: center;      /* centre verticalement */
+    justify-content: space-between;
+    flex-wrap: wrap;          /* garde si besoin sur mobile */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    overflow: visible;         /* évite tout débordement */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary-dark);
+}
+.logo span {
+    font-size: 1.2rem;   /* ajustez */
+    font-weight: 700;
+    color: var(--primary-dark);
+}
+
+nav {
+    display: flex;
+    gap: 25px;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--gray);
+    font-weight: 500;
+    transition: color 0.3s;
+    cursor: pointer;
+}
+
+nav a.active,
+nav a:hover {
+    color: var(--primary);
+}
+
+.user-info {
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+/* ==================== MENU UTILISATEUR ==================== */
+.user-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.user-menu-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    border: 2px solid var(--primary-light);
+    border-radius: 8px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-family: 'Mada', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-dark);
+    transition: all 0.3s;
+}
+
+.user-menu-button:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.user-avatar {
+    font-size: 1.2rem;
+}
+
+.chevron {
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    min-width: 180px;
+    padding: 5px 0;
+    display: none;
+    z-index: 200;
+}
+
+.user-dropdown.open {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.user-dropdown a {
+    display: block;
+    padding: 10px 20px;
+    color: var(--gray-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.user-dropdown a:hover {
+    background: var(--gray-light);
+    color: var(--primary-dark);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Rotation du chevron quand le menu est ouvert */
+.user-menu.open .chevron {
+    transform: rotate(180deg);
+}
+/* Container pleine largeur sur desktop */
+.container {
+    max-width: 1400px;    /* Augmenté */
+    margin: 20px auto;    /* Marge réduite */
+    padding: 0 40px;      /* Plus d'espace latéral */
+    flex: 1;
+}
+
+/* Sections */
+.section {
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dashboard */
+.dashboard h2,
+.section h2 {
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.section-desc {
+    color: var(--gray);
+    margin-bottom: 20px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    text-align: center;
+    border-left: 4px solid var(--primary);
+    transition: transform 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card h3 {
+    font-size: 1rem;
+    color: var(--gray);
+    margin-bottom: 8px;
+}
+
+.stat-card .value {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--primary-dark);
+    margin-bottom: 4px;
+}
+
+.stat-card .label {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+/* Graphique : pleine largeur */
+.chart-container {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    margin-bottom: 25px;
+    width: 100%;           /* Pleine largeur */
+    max-width: 100%;       /* Suppression de la limite précédente */
+    height: auto;          /* Hauteur automatique */
+}
+
+.progress-global {
+    background: var(--white);
+    padding: 20px 25px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.progress-global p {
+    font-weight: 700;
+    color: var(--gray-dark);
+    min-width: 150px;
+}
+
+.progress-global .bar {
+    flex: 1;
+    height: 14px;
+    background: #e0e0e0;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.progress-global .bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    border-radius: 7px;
+    transition: width 0.5s;
+}
+
+.progress-global span {
+    font-weight: 900;
+    color: var(--primary-dark);
+    min-width: 60px;
+    text-align: right;
+}
+
+/* Catalogue / Mes formations */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));  /* Cartes plus larges */
+    gap: 30px;
+}
+
+.course-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.course-header {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    padding: 20px;
+    text-align: center;
+    color: var(--white);
+    font-weight: 900;
+    font-size: 1.2rem;
+}
+
+.course-body {
+    padding: 25px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.course-title {
+    font-weight: 700;
+    color: var(--gray-dark);
+    font-size: 1.2rem;
+}
+
+.course-desc {
+    color: var(--gray);
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+.course-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+.course-progress {
+    margin-top: 5px;
+    background: #e0e0e0;
+    border-radius: 5px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.course-progress .fill {
+    height: 100%;
+    background: var(--secondary-orange);
+    border-radius: 5px;
+}
+
+.btn {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 12px 20px;
+    background: var(--primary);
+    color: var(--white);
+    text-align: center;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background 0.3s;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn:hover {
+    background: var(--primary-dark);
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+/* En-tête de section avec titre à gauche et recherche à droite */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+}
+
+.search-box {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background: var(--white);
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 0 15px;
+    transition: border 0.3s, box-shadow 0.3s;
+    min-width: 280px;
+}
+
+.search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,175,169,0.15);
+}
+
+.search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 10px 40px 10px 0;
+    font-size: 1rem;
+    font-family: 'Mada', sans-serif;
+    color: var(--gray-dark);
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray);
+    pointer-events: none;
+}
+
+/* Grille de formations : 3 colonnes sur desktop */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+/* Pour tablettes */
+@media (max-width: 1024px) {
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Pour mobiles */
+@media (max-width: 768px) {
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .search-box {
+        width: 100%;
+    }
+}
+/* ==================== RESPONSIVE ==================== */
+/* Pour mobiles */
+@media (max-width: 768px) {
+    .topbar {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 15px 20px;
+    }
+    nav {
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .container {
+        padding: 0 20px;
+        margin: 10px auto;
+    }
+    .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .progress-global {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+    .chart-container {
+        padding: 15px;
+    }
+}
+
+/* Pour desktop large (optionnel) */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1600px;
+        padding: 0 60px;
+    }
+    .stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Les fondamentaux du management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00afa9;
+            --primary-light: #cce1e1;
+            --primary-dark: #096475;
+            --secondary-purple: #7200a9;
+            --secondary-orange: #ffa900;
+            --gray: #808284;
+            --gray-light: #f5f7f8;
+            --gray-dark: #4a4a4a;
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Mada', sans-serif;
+            background: var(--gray-light);
+            color: var(--gray-dark);
+            line-height: 1.6;
+        }
+        .topbar {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar a {
+            text-decoration: none;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .course-header {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: var(--white);
+            padding: 40px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .course-header h1 { font-size: 2rem; font-weight: 900; }
+        .content-section {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .content-section h2 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+        .quiz-option {
+            display: block;
+            background: var(--gray-light);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .quiz-option:hover { border-color: var(--primary); }
+        .quiz-option input { margin-right: 10px; }
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .result {
+            margin-top: 15px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a href="index.html">← Retour à la plateforme</a>
+        <span>FormPro</span>
+    </header>
+
+    <main class="container">
+        <div class="course-header">
+            <h1>Les fondamentaux du management</h1>
+            <p>Comprendre le rôle du manager et les postures clés.</p>
+        </div>
+
+        <section class="content-section">
+            <h2>Vidéo de cours</h2>
+            <div class="video-container">
+                <!-- Insérez ici l'URL d'une vidéo YouTube -->
+                <iframe href="https://www.youtube.com/embed/TGKC7AqXzls"  title="Vidéo de test" allowfullscreen></iframe>
+            </div>
+            <p>Regardez la vidéo ci-dessus. Elle présente les bases du management.</p>
+        </section>
+
+        <section class="content-section">
+            <h2>Quiz de validation</h2>
+            <form id="quizForm">
+                <div class="quiz-question">
+                    <p><strong>1. Quelle est une des principales responsabilités d'un manager ?</strong></p>
+                    <label class="quiz-option"><input type="radio" name="q1" value="a"> A. Faire le travail à la place de l'équipe</label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="b"> B. Fixer des objectifs et accompagner l'équipe</label>
+                    <label class="quiz-option"><input type="radio" name="q1" value="c"> C. Contrôler chaque action des collaborateurs</label>
+                </div>
+                <div class="quiz-question">
+                    <p><strong>2. Le feedback constructif sert à :</strong></p>
+                    <label class="quiz-option"><input type="radio" name="q2" value="a"> A. Critiquer pour décourager</label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="b"> B. Aider le collaborateur à progresser</label>
+                    <label class="quiz-option"><input type="radio" name="q2" value="c"> C. Éviter les discussions difficiles</label>
+                </div>
+                <button type="button" onclick="validerQuiz()">Valider le quiz</button>
+                <p id="result" class="result"></p>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        function validerQuiz() {
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            if (!q1 || !q2) {
+                document.getElementById('result').textContent = 'Veuillez répondre à toutes les questions.';
+                return;
+            }
+            let score = 0;
+            if (q1.value === 'b') score++;
+            if (q2.value === 'b') score++;
+            document.getElementById('result').textContent = `Votre score : ${score}/2. ${score === 2 ? 'Félicitations !' : 'Revoyez la vidéo et réessayez.'}`;
+            // Ici, on pourra plus tard envoyer le score au serveur.
+        }
+    </script>
+</body>
+</html>

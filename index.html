@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plateforme de Formation</title>
+    <!-- Police Mada -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ==================== ÉCRAN DE CONNEXION ==================== -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="login-logo">
+                <div class="login-logo">
+    <img src="logo.svg" class="login-logo-img">
+    <h1>Bienvenue</h1>
+</div>
+            </div>
+            <p class="login-subtitle">Connectez-vous pour accéder à votre espace</p>
+            <form id="loginForm">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" required placeholder="Votre identifiant">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" required placeholder="Votre mot de passe">
+                <button type="submit" class="btn-login">Se connecter</button>
+                <p id="loginError" class="login-error"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== CONTENU PRINCIPAL (caché au début) ==================== -->
+    <div id="mainApp" class="main-app" style="display: none;">
+        <header class="topbar">
+            <div class="logo">
+ <img src="logo.svg" class="topbar-logo-img" alt="Logo">
+    <span>Bienvenue</span>
+</div>
+            <nav>
+    <a href="#" data-section="dashboard" class="active">Accueil</a>
+    <a href="#" data-section="catalogue">Catalogue</a>
+    <a href="#" data-section="mes-formations">Mes formations</a>
+</nav>
+
+<div class="user-menu">
+    <button class="user-menu-button" id="userMenuButton">
+        <span class="user-avatar">👤</span>
+        <span id="currentUser"></span>
+        <span class="chevron">▾</span>
+    </button>
+    <div class="user-dropdown" id="userDropdown">
+        <a href="#" id="logoutBtn">Déconnexion</a>
+    </div>
+</div>
+        </header>
+
+        <main class="container">
+            <!-- Section Dashboard -->
+            <section id="dashboardSection" class="section active">
+                <div class="dashboard">
+                    <h2>Tableau de bord</h2>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3>Niveau</h3>
+                            <p class="value">2</p>
+                            <p class="label">Manager en développement</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Points</h3>
+                            <p class="value">350</p>
+                            <p class="label">Prochain palier : 500 pts</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Formations suivies</h3>
+                            <p class="value">4 / 6</p>
+                            <p class="label">2 restantes</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Badges obtenus</h3>
+                            <p class="value">3</p>
+                            <p class="label">🏅🏅🏅</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+
+                    <div class="progress-global">
+                        <p>Progression globale</p>
+                        <div class="bar"><div class="fill" style="width: 66%;"></div></div>
+                        <span>66%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section Catalogue -->
+				<section id="catalogueSection" class="section">
+					<div class="section-header">
+				<h2>Catalogue des formations</h2>
+			<div class="search-box">
+            <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+    <div id="catalogueContainer" class="courses-grid"></div>
+</section>
+
+            <!-- Section Mes formations -->
+	<section id="mesFormationsSection" class="section">
+    <div class="section-header">
+        <h2>Mes formations</h2>
+        <div class="search-box">
+            <input type="text" id="searchInputMesFormations" placeholder="Rechercher dans mes formations...">
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+    <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
+    <div id="mesFormationsContainer" class="courses-grid"></div>
+</section>
+        </main>
+
+        <footer>
+            <p>© 2026 FormPro - Tous droits réservés.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
