@@ -257,11 +257,12 @@ function renderCatalogue() {
             <div class="level-column">
                 <h4>Niveau ${level}</h4>
                 ${coursesForLevel.map(course => `
-                    <div class="course-item" data-course-id="${course.id}">
-                        <div class="course-item-title">${course.title}</div>
-                        <div class="course-item-duree">⏱ ${course.duree}</div>
-                    </div>
-                `).join('')}
+    <div class="course-item" data-course-id="${course.id}">
+        ${course.progress === 100 ? '<span class="badge-completed">Terminé ✓</span>' : ''}
+        <div class="course-item-title">${course.title}</div>
+        <div class="course-item-duree">⏱ ${course.duree}</div>
+    </div>
+`).join('')}
             </div>
         `;
     });
