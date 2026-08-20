@@ -845,3 +845,188 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+/* ==================== NOUVEAU CATALOGUE (thématiques + niveaux) ==================== */
+
+.catalogue-layout {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.catalogue-sidebar {
+    flex: 0 0 250px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    position: sticky;
+    top: 90px;
+    z-index: 5;
+}
+
+.catalogue-sidebar h3 {
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 10px;
+}
+
+.catalogue-sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.catalogue-sidebar li {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--gray-dark);
+    transition: all 0.3s;
+}
+
+.catalogue-sidebar li:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+.catalogue-sidebar li.active {
+    background: var(--primary);
+    color: var(--white);
+    font-weight: 700;
+}
+
+.catalogue-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.catalogue-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.catalogue-header h2 {
+    color: var(--primary-dark);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* Colonnes de niveaux */
+.levels-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+}
+
+.level-column {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 15px;
+}
+
+.level-column h4 {
+    text-align: center;
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid var(--primary-light);
+    padding-bottom: 8px;
+}
+
+.course-item {
+    background: var(--gray-light);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.course-item:hover {
+    background: var(--primary-light);
+    transform: translateY(-2px);
+}
+
+.course-item-title {
+    font-weight: 700;
+    color: var(--gray-dark);
+    font-size: 0.95rem;
+}
+
+.course-item-duree {
+    font-size: 0.8rem;
+    color: var(--gray);
+}
+
+/* Détail du cours */
+.course-detail {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+.course-detail .level-column {
+    flex: 0 0 250px;
+}
+
+.course-detail-panel {
+    flex: 1;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+}
+
+.course-detail-panel h3 {
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+    font-size: 1.4rem;
+}
+
+.course-detail-panel p {
+    margin-bottom: 10px;
+}
+
+.syllabus-list {
+    list-style: disc;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .levels-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .catalogue-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .catalogue-sidebar {
+        position: static;
+        width: 100%;
+        flex: 1;
+    }
+    .levels-grid {
+        grid-template-columns: 1fr;
+    }
+    .course-detail {
+        flex-direction: column;
+    }
+    .course-detail .level-column {
+        flex: 1;
+    }
+}
