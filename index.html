@@ -46,6 +46,7 @@
     <a href="#" data-section="dashboard" class="active">Accueil</a>
     <a href="#" data-section="catalogue">Catalogue</a>
     <a href="#" data-section="mes-formations">Mes formations</a>
+	<a href="#" data-section="admin" id="adminNavLink" style="display:none;">Admin</a>
 </nav>
 
 <div class="user-menu">
@@ -141,6 +142,56 @@
     </div>
     <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
     <div id="mesFormationsContainer" class="courses-grid"></div>
+</section>
+			<!-- Section Admin -->
+<section id="adminSection" class="section">
+    <h2>Administration</h2>
+    <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
+
+    <div class="admin-tabs">
+        <button class="tab-btn active" data-tab="cours">Gestion des cours</button>
+        <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
+        <button class="tab-btn" data-tab="affectations">Affectations</button>
+        <button class="tab-btn" data-tab="resultats">Résultats</button>
+    </div>
+
+    <!-- Onglet Cours -->
+    <div id="tab-cours" class="tab-content active">
+        <div class="admin-actions">
+            <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
+        </div>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Titre</th>
+                    <th>Thématique</th>
+                    <th>Niveau</th>
+                    <th>Durée</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="adminCoursesTable">
+                <!-- Rempli dynamiquement -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Onglet Utilisateurs -->
+    <div id="tab-utilisateurs" class="tab-content">
+        <p>Liste des utilisateurs (à implémenter)</p>
+    </div>
+
+    <!-- Onglet Affectations -->
+    <div id="tab-affectations" class="tab-content">
+        <p>Affectations des cours (à implémenter)</p>
+    </div>
+
+    <!-- Onglet Résultats -->
+    <div id="tab-resultats" class="tab-content">
+        <p>Résultats et progression (à implémenter)</p>
+    </div>
 </section>
         </main>
 
