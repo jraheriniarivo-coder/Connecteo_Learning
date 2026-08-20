@@ -1030,13 +1030,13 @@ footer {
         flex: 1;
     }
 }.course-item {
-    position: relative;   /* indispensable pour positionner le badge */
-    padding: 10px 12px;   /* garder un peu d'espace */
+    position: relative;
+    padding: 10px 12px 30px 12px;   /* plus d'espace en bas */
 }
 
 .badge-completed {
     position: absolute;
-    top: 5px;
+    bottom: 5px;            /* placé en bas */
     right: 5px;
     background: #27ae60;
     color: #ffffff;
