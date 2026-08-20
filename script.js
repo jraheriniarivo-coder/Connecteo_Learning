@@ -22,6 +22,7 @@ let courses = [
         assigned: true,
         progress: 100,
         color: "#00afa9",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Rôle et missions du manager",
             "Les styles de management",
@@ -39,6 +40,7 @@ let courses = [
         assigned: true,
         progress: 0,
         color: "#096475",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Les principes du feedback",
             "La méthode DESC",
@@ -56,6 +58,7 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#ffa900",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Découverte des besoins",
             "Argumentation et traitement des objections",
@@ -73,6 +76,7 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#7200a9",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Les attentes du client moderne",
             "Gestion des réclamations",
@@ -90,6 +94,7 @@ let courses = [
         assigned: true,
         progress: 0,
         color: "#00afa9",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Matrice d'Eisenhower",
             "Planification efficace",
@@ -107,6 +112,7 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#096475",
+        type: "obligatoire",   // ⬅️ Ajouter ceci
         syllabus: [
             "Construire une vision",
             "Communiquer la vision",
@@ -136,6 +142,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 function checkSession() {
     const sessionUser = localStorage.getItem('sessionUser');
     if (sessionUser) {
+        loadProgressFromLocalStorage();  //
         showApp(JSON.parse(sessionUser));
     } else {
         showLogin();
@@ -318,11 +325,22 @@ function closeCourseDetail() {
 // ============================================
 let progressChartInstance = null;
 
+function loadProgressFromLocalStorage() {
+    courses.forEach(course => {
+        const completed = localStorage.getItem(`cours${course.id}_completed`);
+        if (completed === 'true') {
+            course.progress = 100;
+            const score = localStorage.getItem(`cours${course.id}_score`);
+            if (score) {
+                course.score = parseInt(score);
+            }
+        }
+    });
+}
+
 function renderDashboard() {
-    // Met à jour la progression globale (données simulées pour l'instant)
-    // Vous pourrez plus tard remplacer par les vraies données du localStorage
-    const totalCours = courses.length;
-    const completedCours = courses.filter(c => c.progress === 100).length;
+    const totalCours = courses.filter(c => c.assigned).length;
+    const completedCours = courses.filter(c => c.assigned && c.progress === 100).length;
     const progression = totalCours > 0 ? Math.round((completedCours / totalCours) * 100) : 0;
 
     // Mettre à jour la barre de progression globale
@@ -333,48 +351,44 @@ function renderDashboard() {
         span.textContent = progression + '%';
     }
 
-    // Mettre à jour le nombre de formations suivies (exemple statique à adapter)
-    const formationsSuivies = document.querySelector('.stat-card .value');
-    if (formationsSuivies) {
-        // On garde la valeur actuelle pour l'instant, à améliorer plus tard
+    // Mettre à jour les statistiques
+    const statValues = document.querySelectorAll('.stat-card .value');
+    if (statValues.length >= 3) {
+        // Niveau (on garde l'existant ou on calcule)
+        // Points (simulé)
+        // Formations suivies
+        statValues[2].textContent = `${completedCours} / ${totalCours}`;
+        // Badges (simulé)
+        statValues[3].textContent = completedCours; // par exemple
     }
 
-    // Création du graphique Chart.js
+    // Graphique : nous pouvons maintenant regrouper par thème
+    const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
+    const themeProgress = themes.map(theme => {
+        const themeCourses = courses.filter(c => c.theme === theme && c.assigned);
+        const themeCompleted = themeCourses.filter(c => c.progress === 100);
+        return themeCourses.length > 0 ? Math.round((themeCompleted.length / themeCourses.length) * 100) : 0;
+    });
+
     const ctx = document.getElementById('progressChart').getContext('2d');
-    if (progressChartInstance) {
-        progressChartInstance.destroy();
-    }
+    if (progressChartInstance) progressChartInstance.destroy();
 
     progressChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Management', 'Communication', 'Efficacité', 'Animation', 'Performance'],
+            labels: themes,
             datasets: [{
-                label: 'Progression par catégorie (%)',
-                data: [80, 50, 20, 40, 0],  // Données simulées
-                backgroundColor: [
-                    '#00afa9',
-                    '#096475',
-                    '#ffa900',
-                    '#7200a9',
-                    '#cce1e1'
-                ],
-                borderColor: [
-                    '#00afa9',
-                    '#096475',
-                    '#ffa900',
-                    '#7200a9',
-                    '#808284'
-                ],
+                label: 'Progression par thématique (%)',
+                data: themeProgress,
+                backgroundColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#cce1e1'],
+                borderColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#808284'],
                 borderWidth: 1,
                 borderRadius: 5
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -422,4 +436,10 @@ document.querySelectorAll('#themeList li').forEach(item => {
     if (sections.catalogue.classList.contains('active')) {
         renderCatalogue();
     }
+    // Gérer le hash pour navigation directe
+if (location.hash === '#catalogue') {
+    document.querySelector('nav a[data-section="catalogue"]').click();
+} else if (location.hash === '#dashboard') {
+    document.querySelector('nav a[data-section="dashboard"]').click();
+}
 });
