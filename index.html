@@ -100,16 +100,33 @@
                 </div>
             </section>
 
-            <!-- Section Catalogue -->
-				<section id="catalogueSection" class="section">
-					<div class="section-header">
-				<h2>Catalogue des formations</h2>
-			<div class="search-box">
-            <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
-            <span class="search-icon">🔍</span>
+          <!-- Section Catalogue (nouvelle interface) -->
+<section id="catalogueSection" class="section">
+    <div class="catalogue-layout">
+        <!-- Barre latérale des niveaux -->
+        <aside class="catalogue-sidebar">
+            <h3>Niveaux de compétence</h3>
+            <ul id="niveauList">
+                <li data-niveau="all" class="active">Toutes les formations</li>
+                <li data-niveau="1">Niveau 1 – Socle commun</li>
+                <li data-niveau="2">Niveau 2 – Management opérationnel</li>
+                <li data-niveau="3">Niveau 3 – Leadership</li>
+                <li data-niveau="4">Niveau 4 – Expert</li>
+            </ul>
+        </aside>
+
+        <!-- Zone de contenu -->
+        <div class="catalogue-content">
+            <div class="section-header">
+                <h2>Catalogue des formations</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+            <div id="catalogueContainer" class="courses-grid"></div>
         </div>
     </div>
-    <div id="catalogueContainer" class="courses-grid"></div>
 </section>
 
             <!-- Section Mes formations -->
