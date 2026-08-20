@@ -208,21 +208,24 @@ navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const targetSection = link.dataset.section;
+
         // Retirer la classe active de tous les liens
         navLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
+
         // Masquer toutes les sections
         Object.values(sections).forEach(s => s.classList.remove('active'));
+
         // Afficher la section cible
         sections[targetSection].classList.add('active');
-        // Si c'est le catalogue, mettre à jour le contenu
-       if (targetSection === 'catalogue') {
-    renderCatalogue();
-} else if (targetSection === 'mes-formations') {
-    renderMesFormations();
-} else if (targetSection === 'admin') {
-    renderAdminCourses();
-}
+
+        // Actions spécifiques
+        if (targetSection === 'catalogue') {
+            renderCatalogue();
+        } else if (targetSection === 'mes-formations') {
+            renderMesFormations();
+        } else if (targetSection === 'admin') {
+            renderAdminCourses();
         }
     });
 });
