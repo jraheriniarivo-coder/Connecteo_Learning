@@ -127,7 +127,14 @@ let currentNiveau = 'all';   // 'all' ou '1', '2', '3', '4'
 // État du catalogue
 let currentTheme = 'Management';   // Thématique sélectionnée par défaut
 let selectedCourseId = null;       // ID du cours sélectionné (pour le détail)
+// Groupes de formation (simulation)
+let groupes = [
+    { id: 1, nom: "Groupe A", coursId: 1, dateDebut: "2026-09-01", dateFin: "2026-09-30", participants: [] },
+    { id: 2, nom: "Groupe B", coursId: 2, dateDebut: "2026-10-01", dateFin: "2026-10-31", participants: [] }
+];
 
+// Utilisateurs importés (simulation)
+let importedUsers = [];
 // ============================================
 // GESTION DE L'AUTHENTIFICATION
 // ============================================
@@ -138,7 +145,14 @@ const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
 const adminNavLink = document.getElementById('adminNavLink');
-
+// Variables admin
+const adminNavLink = document.getElementById('adminNavLink');
+const adminSection = document.getElementById('adminSection');
+const adminCoursesTable = document.getElementById('adminCoursesTable');
+const btnAddCourse = document.getElementById('btnAddCourse');
+const btnImportUsers = document.getElementById('btnImportUsers');
+const importUsersFile = document.getElementById('importUsersFile');
+const importedUsersList = document.getElementById('importedUsersList');
 
 // Vérifier si une session existe
 function checkSession() {
@@ -400,6 +414,7 @@ function setupAdminTabs() {
         });
     });
 }
+
 // ============================================
 // TABLEAU DE BORD (dashboard)
 // ============================================
@@ -414,6 +429,373 @@ function loadProgressFromLocalStorage() {
             if (score) {
                 course.score = parseInt(score);
             }
+        }
+    });
+}
+// ============================================
+// ADMINISTRATION
+// ============================================
+
+// Remplit la table des cours avec les nouvelles colonnes
+function renderAdminCourses() {
+    const tbody = adminCoursesTable;
+    tbody.innerHTML = '';
+
+    courses.forEach(course => {
+        const tr = document.createElement('tr');
+        // Compter les sessions pour ce cours (simulation : 2 pour id 1, 1 pour id 2, 0 sinon)
+        const sessionCount = groupes.filter(g => g.coursId === course.id).length;
+
+        tr.innerHTML = `
+            <td>${course.theme}</td>
+            <td>${course.title}</td>
+            <td>${course.niveau}</td>
+            <td>${course.duree}</td>
+            <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
+            <td><span class="session-link" data-course-id="${course.id}">${sessionCount}</span></td>
+            <td>
+                <button class="admin-btn edit" data-id="${course.id}">Modifier</button>
+                <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
+                <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Ajouter les écouteurs sur les nombres de session
+    tbody.querySelectorAll('.session-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const courseId = parseInt(link.dataset.courseId);
+            openSessionModal(courseId);
+        });
+    });
+
+    // Écouteurs pour boutons Modifier, Supprimer, Affecter
+    tbody.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const courseId = parseInt(btn.dataset.id);
+            alert(`Modifier le cours ${courseId} (simulation)`);
+        });
+    });
+
+    tbody.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const courseId = parseInt(btn.dataset.id);
+            if (confirm(`Supprimer le cours ${courseId} ?`)) {
+                courses = courses.filter(c => c.id !== courseId);
+                renderAdminCourses();
+                alert('Cours supprimé (simulation)');
+            }
+        });
+    });
+
+    tbody.querySelectorAll('.affect').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const courseId = parseInt(btn.dataset.id);
+            openAffectationModal(courseId);
+        });
+    });
+}
+
+// Ouvre une modal affichant les sessions d'un cours
+function openSessionModal(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    const sessionsForCourse = groupes.filter(g => g.coursId === courseId);
+    let html = `
+        <div class="modal-overlay" id="sessionModalOverlay">
+            <div class="modal-box">
+                <h3>Sessions pour "${course.title}"</h3>
+                ${sessionsForCourse.map(g => `
+                    <div style="margin-bottom: 10px; padding: 10px; background: var(--gray-light); border-radius: 8px;">
+                        <p><strong>Groupe :</strong> <a href="#" class="session-group-link" data-group-id="${g.id}">${g.nom}</a></p>
+                        <p><strong>Période :</strong> ${g.dateDebut} → ${g.dateFin}</p>
+                        <p><strong>Participants :</strong> ${g.participants.length}</p>
+                    </div>
+                `).join('') || '<p>Aucune session pour le moment.</p>'}
+                <div class="modal-actions">
+                    <button class="btn" onclick="closeModal('sessionModalOverlay')">Fermer</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // Écouteur sur le nom du groupe pour voir les participants
+    document.querySelectorAll('.session-group-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const groupId = parseInt(link.dataset.groupId);
+            openGroupDetail(groupId);
+        });
+    });
+}
+
+// Affiche les détails d'un groupe (participants, statuts)
+function openGroupDetail(groupId) {
+    const group = groupes.find(g => g.id === groupId);
+    if (!group) return;
+
+    let html = `
+        <div class="modal-overlay" id="groupDetailOverlay">
+            <div class="modal-box">
+                <h3>Groupe : ${group.nom}</h3>
+                <p><strong>Cours :</strong> ${courses.find(c => c.id === group.coursId).title}</p>
+                <p><strong>Période :</strong> ${group.dateDebut} → ${group.dateFin}</p>
+                <h4>Participants (${group.participants.length})</h4>
+                <ul>
+                    ${group.participants.map(p => `<li>${p.nom} - ${p.fonction} - ${p.bu}</li>`).join('') || '<li>Aucun participant</li>'}
+                </ul>
+                <div class="modal-actions">
+                    <button class="btn" onclick="closeModal('groupDetailOverlay')">Fermer</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// Ouvre le modal d'affectation (Liste / Fichier)
+function openAffectationModal(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    let html = `
+        <div class="modal-overlay" id="affectationModalOverlay">
+            <div class="modal-box">
+                <h3>Affecter des participants à "${course.title}"</h3>
+                <p>Choisissez la méthode :</p>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn" id="btnChoiceList">📋 Liste</button>
+                    <button class="btn" id="btnChoiceFile">📁 Fichier</button>
+                </div>
+                <div id="affectationContent">
+                    <!-- Zone dynamique -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn" onclick="closeModal('affectationModalOverlay')">Fermer</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    document.getElementById('btnChoiceList').addEventListener('click', () => {
+        showAffectationList(courseId);
+    });
+    document.getElementById('btnChoiceFile').addEventListener('click', () => {
+        showAffectationFile(courseId);
+    });
+}
+
+// Affiche la liste des collaborateurs (simulée) pour sélection
+function showAffectationList(courseId) {
+    const container = document.getElementById('affectationContent');
+    // Simulons une liste de collaborateurs
+    const collaborateurs = [
+        { nom: "Rabe", fonction: "Manager", matricule: "M001", bu: "Comete" },
+        { nom: "Rakoto", fonction: "CSA", matricule: "C002", bu: "YAS" },
+        { nom: "Razafy", fonction: "Manager", matricule: "M003", bu: "Mvola" },
+        { nom: "Andry", fonction: "CEO", matricule: "CEO001", bu: "Support" },
+        { nom: "Lala", fonction: "Manager", matricule: "M004", bu: "Openfield" }
+    ];
+
+    let html = `<p>Filtrer par BU : 
+        <select id="buFilter">
+            <option value="">Toutes les BU</option>
+            <option>Comete</option><option>YAS</option><option>Mvola</option><option>Support</option><option>Openfield</option>
+        </select>
+    </p>`;
+    html += '<table class="admin-table"><thead><tr><th>Sélection</th><th>Fonction</th><th>Matricule</th><th>BU</th><th>Nom Prénom</th></tr></thead><tbody id="collabTableBody">';
+    collaborateurs.forEach((c, index) => {
+        html += `<tr data-bu="${c.bu}"><td><input type="checkbox" class="collabCheck" data-index="${index}"></td><td>${c.fonction}</td><td>${c.matricule}</td><td>${c.bu}</td><td>${c.nom}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    html += `<input type="text" id="groupName" placeholder="Nom du groupe (obligatoire)" style="width:100%; padding:10px; margin-top:10px;">`;
+    html += `<button class="btn" id="btnValiderGroupe">Valider le groupe</button>`;
+    container.innerHTML = html;
+
+    document.getElementById('buFilter').addEventListener('change', (e) => {
+        const val = e.target.value;
+        document.querySelectorAll('#collabTableBody tr').forEach(tr => {
+            if (!val || tr.dataset.bu === val) {
+                tr.style.display = '';
+            } else {
+                tr.style.display = 'none';
+            }
+        });
+    });
+
+    document.getElementById('btnValiderGroupe').addEventListener('click', () => {
+        const nomGroupe = document.getElementById('groupName').value.trim();
+        if (!nomGroupe) {
+            alert('Le nom du groupe est obligatoire');
+            return;
+        }
+        const selected = [];
+        document.querySelectorAll('.collabCheck:checked').forEach(cb => {
+            const idx = parseInt(cb.dataset.index);
+            selected.push(collaborateurs[idx]);
+        });
+        if (selected.length === 0) {
+            alert('Sélectionnez au moins un participant');
+            return;
+        }
+        const newGroup = {
+            id: groupes.length + 1,
+            nom: nomGroupe,
+            coursId: courseId,
+            dateDebut: "2026-09-01",  // à remplacer par calendrier plus tard
+            dateFin: "2026-09-30",
+            participants: selected
+        };
+        groupes.push(newGroup);
+        closeModal('affectationModalOverlay');
+        renderAdminCourses(); // met à jour la colonne session
+    });
+}
+
+// Affiche un champ d'import de fichier (simulation)
+function showAffectationFile(courseId) {
+    const container = document.getElementById('affectationContent');
+    container.innerHTML = `
+        <p>Importez un fichier CSV (simulation).</p>
+        <input type="file" id="fakeFileInput" accept=".csv">
+        <button class="btn" id="btnImportFake">Importer</button>
+        <p>Le groupe sera créé avec les participants du fichier.</p>
+    `;
+    document.getElementById('btnImportFake').addEventListener('click', () => {
+        const nomGroupe = prompt("Nom du groupe (obligatoire) :");
+        if (!nomGroupe) return;
+        const newGroup = {
+            id: groupes.length + 1,
+            nom: nomGroupe,
+            coursId: courseId,
+            dateDebut: "2026-09-01",
+            dateFin: "2026-09-30",
+            participants: [{ nom: "Importé", fonction: "Inconnu", matricule: "IMP001", bu: "N/A" }]
+        };
+        groupes.push(newGroup);
+        closeModal('affectationModalOverlay');
+        renderAdminCourses();
+    });
+}
+
+// Ferme une modal
+function closeModal(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) overlay.remove();
+}
+
+// Gestion des onglets admin
+function setupAdminTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            document.getElementById(`tab-${target}`).classList.add('active');
+
+            if (target === 'cours') {
+                renderAdminCourses();
+            } else if (target === 'global') {
+                renderGlobalDashboard();
+            }
+        });
+    });
+}
+
+// Bouton Ajouter un cours (simulation)
+btnAddCourse.addEventListener('click', () => {
+    alert('Formulaire d\'ajout de cours (à implémenter)');
+});
+
+// Import d'utilisateurs (CSV simple)
+btnImportUsers.addEventListener('click', () => {
+    importUsersFile.click();
+});
+
+importUsersFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const csv = event.target.result;
+        const lines = csv.split('\n');
+        // Premier ligne = en-têtes
+        const headers = lines[0].split(',').map(h => h.trim());
+        importedUsers = [];
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const values = lines[i].split(',').map(v => v.trim());
+            const user = {};
+            headers.forEach((h, idx) => {
+                user[h.toLowerCase()] = values[idx] || '';
+            });
+            importedUsers.push(user);
+        }
+        renderImportedUsers();
+        alert(`${importedUsers.length} utilisateurs importés (simulation)`);
+    };
+    reader.readAsText(file);
+});
+
+function renderImportedUsers() {
+    importedUsersList.innerHTML = '';
+    importedUsers.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = `${user.nom || ''} ${user.prenom || ''} - ${user.fonction || ''} - ${user.bu || ''}`;
+        importedUsersList.appendChild(li);
+    });
+}
+
+// Dashboard global (Chart.js)
+let globalPieChartInstance = null;
+let globalBarChartInstance = null;
+
+function renderGlobalDashboard() {
+    document.getElementById('globalTotalCours').textContent = courses.length;
+    document.getElementById('globalTotalGroupes').textContent = groupes.length;
+    const avg = courses.length > 0 ? Math.round(courses.reduce((sum, c) => sum + c.progress, 0) / courses.length) : 0;
+    document.getElementById('globalCompletion').textContent = avg + '%';
+
+    // Données pour les graphiques
+    const themeData = themes.map(theme => {
+        const count = courses.filter(c => c.theme === theme).length;
+        return count;
+    });
+
+    if (globalPieChartInstance) globalPieChartInstance.destroy();
+    const pieCtx = document.getElementById('globalPieChart').getContext('2d');
+    globalPieChartInstance = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: themes,
+            datasets: [{
+                data: themeData,
+                backgroundColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#cce1e1']
+            }]
+        }
+    });
+
+    if (globalBarChartInstance) globalBarChartInstance.destroy();
+    const barCtx = document.getElementById('globalBarChart').getContext('2d');
+    globalBarChartInstance = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: courses.map(c => c.title),
+            datasets: [{
+                label: 'Progression (%)',
+                data: courses.map(c => c.progress),
+                backgroundColor: '#00afa9'
+            }]
         }
     });
 }
