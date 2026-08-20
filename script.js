@@ -9,79 +9,111 @@ const users = [
 ];
 
 // Données des cours (exemples avec niveaux et autoInscription)
+// Données des cours (exemples avec thèmes, niveaux, syllabus)
 let courses = [
     {
         id: 1,
         title: "Les fondamentaux du management",
         description: "Comprendre les bases du rôle de manager, la posture et les missions clés.",
-        category: "Management",
+        theme: "Management",
         niveau: 1,
         duree: "3h",
         autoInscription: true,
         assigned: true,
         progress: 0,
-        color: "#00afa9"
+        color: "#00afa9",
+        syllabus: [
+            "Rôle et missions du manager",
+            "Les styles de management",
+            "Fixer des objectifs SMART"
+        ]
     },
     {
         id: 2,
         title: "Donner du feedback constructif",
         description: "Techniques pour formuler des retours efficaces et bienveillants.",
-        category: "Communication",
+        theme: "Communication",
         niveau: 1,
         duree: "2h",
         autoInscription: true,
         assigned: true,
         progress: 0,
-        color: "#096475"
+        color: "#096475",
+        syllabus: [
+            "Les principes du feedback",
+            "La méthode DESC",
+            "Mises en situation"
+        ]
     },
     {
         id: 3,
-        title: "Gestion du temps et priorités",
-        description: "Outils pour organiser sa journée et se concentrer sur l'essentiel.",
-        category: "Efficacité",
+        title: "Techniques de vente avancées",
+        description: "Maîtriser les étapes clés pour convaincre et fidéliser.",
+        theme: "Commerciale",
         niveau: 2,
-        duree: "1h30",
+        duree: "4h",
         autoInscription: false,
         assigned: false,
         progress: 0,
-        color: "#ffa900"
+        color: "#ffa900",
+        syllabus: [
+            "Découverte des besoins",
+            "Argumentation et traitement des objections",
+            "Clôture de la vente"
+        ]
     },
     {
         id: 4,
-        title: "Animer un brief d'équipe",
-        description: "Méthode pour préparer et animer un brief percutant en 10 minutes.",
-        category: "Animation",
-        niveau: 2,
-        duree: "1h",
+        title: "L'excellence du service client",
+        description: "Créer une expérience client mémorable et durable.",
+        theme: "Relation client",
+        niveau: 1,
+        duree: "2h30",
         autoInscription: true,
-        assigned: true,
+        assigned: false,
         progress: 0,
-        color: "#7200a9"
+        color: "#7200a9",
+        syllabus: [
+            "Les attentes du client moderne",
+            "Gestion des réclamations",
+            "Fidélisation et recommandation"
+        ]
     },
     {
         id: 5,
-        title: "Comprendre les KPIs",
-        description: "Savoir lire et exploiter les indicateurs de performance pour piloter.",
-        category: "Performance",
-        niveau: 3,
-        duree: "2h",
-        autoInscription: false,
-        assigned: false,
+        title: "Gestion du temps et priorités",
+        description: "Organiser sa journée et se concentrer sur l'essentiel.",
+        theme: "Soft skills",
+        niveau: 2,
+        duree: "1h30",
+        autoInscription: true,
+        assigned: true,
         progress: 0,
-        color: "#096475"
+        color: "#00afa9",
+        syllabus: [
+            "Matrice d'Eisenhower",
+            "Planification efficace",
+            "Délégation"
+        ]
     },
     {
         id: 6,
         title: "Leadership et vision",
         description: "Développer une vision stratégique et fédérer les équipes.",
-        category: "Leadership",
+        theme: "Management",
         niveau: 4,
         duree: "4h",
         autoInscription: false,
         assigned: false,
         progress: 0,
-        color: "#7200a9"
-    }
+        color: "#096475",
+        syllabus: [
+            "Construire une vision",
+            "Communiquer la vision",
+            "Incarner le changement"
+        ]
+    },
+    // Ajoutez d'autres cours selon vos besoins...
 ];
 
 // État du filtre actuel pour le catalogue
