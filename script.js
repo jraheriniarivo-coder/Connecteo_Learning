@@ -144,8 +144,8 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
-const adminNavLink = document.getElementById('adminNavLink');
 // Variables admin
+const adminNavLink = document.getElementById('adminNavLink');
 const adminSection = document.getElementById('adminSection');
 const adminCoursesTable = document.getElementById('adminCoursesTable');
 const btnAddCourse = document.getElementById('btnAddCourse');
