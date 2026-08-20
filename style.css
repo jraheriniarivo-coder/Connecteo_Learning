@@ -791,3 +791,57 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+/* ==================== CORRECTIONS POUR LE CATALOGUE DESKTOP ==================== */
+
+.catalogue-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    flex-wrap: nowrap;
+}
+
+.catalogue-sidebar {
+    flex: 0 0 250px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 20px;
+    position: sticky;
+    top: 90px;
+    z-index: 5;
+}
+
+.catalogue-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Grille de cours : 3 colonnes sur grands écrans */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+/* Sur écrans moyens (tablette) : 2 colonnes */
+@media (max-width: 1100px) {
+    .courses-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Sur petits écrans (mobile) : 1 colonne et sidebar empilée */
+@media (max-width: 768px) {
+    .catalogue-layout {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .catalogue-sidebar {
+        position: static;
+        width: 100%;
+        flex: 1;
+    }
+    .courses-grid {
+        grid-template-columns: 1fr;
+    }
+}
