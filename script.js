@@ -20,7 +20,7 @@ let courses = [
         duree: "3h",
         autoInscription: true,
         assigned: true,
-        progress: 0,
+        progress: 100,
         color: "#00afa9",
         syllabus: [
             "Rôle et missions du manager",
