@@ -111,12 +111,27 @@
             font-weight: 700;
             cursor: pointer;
             transition: transform 0.3s;
+            margin-right: 10px;
         }
         button:hover { transform: translateY(-2px); }
         .result {
             margin-top: 15px;
             font-weight: 700;
             color: var(--primary-dark);
+        }
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .btn-secondary {
+            background: var(--white);
+            color: var(--primary-dark);
+            border: 2px solid var(--primary);
+        }
+        .btn-secondary:hover {
+            background: var(--primary-light);
         }
     </style>
 </head>
@@ -135,11 +150,8 @@
         <section class="content-section">
             <h2>Vidéo de cours</h2>
             <div class="video-container">
-                <!-- Insérez ici l'URL d'une vidéo YouTube -->
-                <iframe src="https://www.youtube.com/embed/TGKC7AqXzls" 
-        title="Vidéo de cours" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowfullscreen></iframe>
+                <!-- Remplacez VIDEO_ID par l'identifiant YouTube réel -->
+                <iframe src="https://www.youtube.com/embed/TGKC7AqXzls" title="Vidéo de cours" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <p>Regardez la vidéo ci-dessus. Elle présente les bases du management.</p>
         </section>
@@ -147,37 +159,120 @@
         <section class="content-section">
             <h2>Quiz de validation</h2>
             <form id="quizForm">
+                <!-- Question 1 -->
                 <div class="quiz-question">
                     <p><strong>1. Quelle est une des principales responsabilités d'un manager ?</strong></p>
                     <label class="quiz-option"><input type="radio" name="q1" value="a"> A. Faire le travail à la place de l'équipe</label>
                     <label class="quiz-option"><input type="radio" name="q1" value="b"> B. Fixer des objectifs et accompagner l'équipe</label>
                     <label class="quiz-option"><input type="radio" name="q1" value="c"> C. Contrôler chaque action des collaborateurs</label>
                 </div>
+                <!-- Question 2 -->
                 <div class="quiz-question">
                     <p><strong>2. Le feedback constructif sert à :</strong></p>
                     <label class="quiz-option"><input type="radio" name="q2" value="a"> A. Critiquer pour décourager</label>
                     <label class="quiz-option"><input type="radio" name="q2" value="b"> B. Aider le collaborateur à progresser</label>
                     <label class="quiz-option"><input type="radio" name="q2" value="c"> C. Éviter les discussions difficiles</label>
                 </div>
+                <!-- Question 3 -->
+                <div class="quiz-question">
+                    <p><strong>3. Parmi les styles de management, lequel laisse le plus d'autonomie à l'équipe ?</strong></p>
+                    <label class="quiz-option"><input type="radio" name="q3" value="a"> A. Directif</label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="b"> B. Participatif</label>
+                    <label class="quiz-option"><input type="radio" name="q3" value="c"> C. Délégatif</label>
+                </div>
+                <!-- Question 4 -->
+                <div class="quiz-question">
+                    <p><strong>4. Qu'est-ce qu'un objectif SMART ?</strong></p>
+                    <label class="quiz-option"><input type="radio" name="q4" value="a"> A. Un objectif vague et ambitieux</label>
+                    <label class="quiz-option"><input type="radio" name="q4" value="b"> B. Un objectif Spécifique, Mesurable, Atteignable, Réaliste, Temporel</label>
+                    <label class="quiz-option"><input type="radio" name="q4" value="c"> C. Un objectif uniquement financier</label>
+                </div>
+                <!-- Question 5 -->
+                <div class="quiz-question">
+                    <p><strong>5. La délégation efficace consiste à :</strong></p>
+                    <label class="quiz-option"><input type="radio" name="q5" value="a"> A. Confier une tâche sans explication</label>
+                    <label class="quiz-option"><input type="radio" name="q5" value="b"> B. Transférer une mission avec les moyens et l'autonomie nécessaires</label>
+                    <label class="quiz-option"><input type="radio" name="q5" value="c"> C. Se décharger de ses responsabilités</label>
+                </div>
+
                 <button type="button" onclick="validerQuiz()">Valider le quiz</button>
                 <p id="result" class="result"></p>
+                <div id="actions" class="actions" style="display: none;">
+                    <a href="index.html#catalogue" class="btn-secondary" style="text-decoration:none; padding: 12px 25px; border-radius:8px;">Retour au catalogue</a>
+                    <a href="index.html#dashboard" class="btn-secondary" style="text-decoration:none; padding: 12px 25px; border-radius:8px;">Voir mon tableau de bord</a>
+                </div>
             </form>
         </section>
     </main>
 
     <script>
+        // ============================================
+        // CONFIGURATION DU COURS
+        // ============================================
+        const COURS_ID = 1;
+        const COURS_TYPE = "obligatoire";  // "obligatoire" ou "information"
+        const SEUIL_REUSSITE = 80;         // pourcentage requis (uniquement pour obligatoire)
+
         function validerQuiz() {
-            const q1 = document.querySelector('input[name="q1"]:checked');
-            const q2 = document.querySelector('input[name="q2"]:checked');
-            if (!q1 || !q2) {
+            // Récupération des réponses
+            const reponses = {
+                q1: document.querySelector('input[name="q1"]:checked'),
+                q2: document.querySelector('input[name="q2"]:checked'),
+                q3: document.querySelector('input[name="q3"]:checked'),
+                q4: document.querySelector('input[name="q4"]:checked'),
+                q5: document.querySelector('input[name="q5"]:checked')
+            };
+
+            // Vérifier que toutes les questions ont une réponse
+            if (!reponses.q1 || !reponses.q2 || !reponses.q3 || !reponses.q4 || !reponses.q5) {
                 document.getElementById('result').textContent = 'Veuillez répondre à toutes les questions.';
                 return;
             }
+
+            // Calcul du score
+            const bonnesReponses = {
+                q1: 'b',
+                q2: 'b',
+                q3: 'c',
+                q4: 'b',
+                q5: 'b'
+            };
             let score = 0;
-            if (q1.value === 'b') score++;
-            if (q2.value === 'b') score++;
-            document.getElementById('result').textContent = `Votre score : ${score}/2. ${score === 2 ? 'Félicitations !' : 'Revoyez la vidéo et réessayez.'}`;
-            // Ici, on pourra plus tard envoyer le score au serveur.
+            Object.keys(bonnesReponses).forEach(q => {
+                if (reponses[q].value === bonnesReponses[q]) {
+                    score++;
+                }
+            });
+            const totalQuestions = Object.keys(bonnesReponses).length;
+            const pourcentage = Math.round((score / totalQuestions) * 100);
+
+            let resultat = `Votre score : ${score}/${totalQuestions} (${pourcentage}%). `;
+
+            // Déterminer si le cours est validé
+            let valide = false;
+            if (COURS_TYPE === "information") {
+                valide = true;
+                resultat += 'Cours informatif terminé. Merci !';
+            } else if (COURS_TYPE === "obligatoire") {
+                if (pourcentage >= SEUIL_REUSSITE) {
+                    valide = true;
+                    resultat += 'Félicitations, vous avez réussi le quiz !';
+                } else {
+                    resultat += `Vous n'avez pas atteint le seuil de ${SEUIL_REUSSITE}%. Veuillez réessayer.`;
+                }
+            }
+
+            document.getElementById('result').textContent = resultat;
+
+            // Si validé, enregistrer dans localStorage et afficher les boutons
+            if (valide) {
+                localStorage.setItem(`cours${COURS_ID}_completed`, 'true');
+                localStorage.setItem(`cours${COURS_ID}_score`, pourcentage);
+                document.getElementById('actions').style.display = 'flex';
+            } else {
+                // Cacher les boutons si non validé
+                document.getElementById('actions').style.display = 'none';
+            }
         }
     </script>
 </body>
