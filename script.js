@@ -137,6 +137,7 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
+const adminNavLink = document.getElementById('adminNavLink');
 
 
 // Vérifier si une session existe
@@ -199,7 +200,6 @@ const sections = {
     'mes-formations': document.getElementById('mesFormationsSection'),
     admin: document.getElementById('adminSection')
 };
-const adminNavLink = document.getElementById('adminNavLink');
 const adminSection = document.getElementById('adminSection');
 const adminCoursesTable = document.getElementById('adminCoursesTable');
 const btnAddCourse = document.getElementById('btnAddCourse');
@@ -216,11 +216,11 @@ navLinks.forEach(link => {
         // Afficher la section cible
         sections[targetSection].classList.add('active');
         // Si c'est le catalogue, mettre à jour le contenu
-        if (targetSection === 'catalogue') {
-            renderCatalogue();
-        } else if (targetSection === 'mes-formations') {
-            renderMesFormations();
-            if (targetSection === 'admin') {
+       if (targetSection === 'catalogue') {
+    renderCatalogue();
+} else if (targetSection === 'mes-formations') {
+    renderMesFormations();
+} else if (targetSection === 'admin') {
     renderAdminCourses();
 }
         }
