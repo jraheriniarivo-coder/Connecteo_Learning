@@ -19,6 +19,7 @@ let courses = [
         duree: "3h",
         autoInscription: true,
         assigned: true,
+        progress: 0,
         color: "#00afa9"
     },
     {
@@ -29,7 +30,8 @@ let courses = [
         niveau: 1,
         duree: "2h",
         autoInscription: true,
-        assigned: false,
+        assigned: true,
+        progress: 0,
         color: "#096475"
     },
     {
@@ -40,7 +42,8 @@ let courses = [
         niveau: 2,
         duree: "1h30",
         autoInscription: false,
-        assigned: true,
+        assigned: false,
+        progress: 0,
         color: "#ffa900"
     },
     {
@@ -52,6 +55,7 @@ let courses = [
         duree: "1h",
         autoInscription: true,
         assigned: true,
+        progress: 0,
         color: "#7200a9"
     },
     {
@@ -63,6 +67,7 @@ let courses = [
         duree: "2h",
         autoInscription: false,
         assigned: false,
+        progress: 0,
         color: "#096475"
     },
     {
@@ -74,9 +79,13 @@ let courses = [
         duree: "4h",
         autoInscription: false,
         assigned: false,
+        progress: 0,
         color: "#7200a9"
     }
 ];
+
+// État du filtre actuel pour le catalogue
+let currentNiveau = 'all';   // 'all' ou '1', '2', '3', '4'
 
 // ============================================
 // GESTION DE L'AUTHENTIFICATION
@@ -151,7 +160,7 @@ navLinks.forEach(link => {
         Object.values(sections).forEach(s => s.classList.remove('active'));
         // Afficher la section cible
         sections[targetSection].classList.add('active');
-        // Si c'est le catalogue ou mes formations, mettre à jour le contenu
+        // Si c'est le catalogue, mettre à jour le contenu
         if (targetSection === 'catalogue') {
             renderCatalogue();
         } else if (targetSection === 'mes-formations') {
@@ -161,7 +170,28 @@ navLinks.forEach(link => {
 });
 
 // ============================================
-// RENDU DES COURS
+// MENU UTILISATEUR DÉROULANT
+// ============================================
+const userMenu = document.querySelector('.user-menu');
+const userMenuButton = document.getElementById('userMenuButton');
+const userDropdown = document.getElementById('userDropdown');
+
+userMenuButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    userMenu.classList.toggle('open');
+    userDropdown.classList.toggle('open');
+});
+
+// Fermer le menu si on clique ailleurs
+document.addEventListener('click', (e) => {
+    if (!userMenu.contains(e.target)) {
+        userMenu.classList.remove('open');
+        userDropdown.classList.remove('open');
+    }
+});
+
+// ============================================
+// RENDU DES COURS (catalogue et mes formations)
 // ============================================
 function renderCatalogue() {
     const container = document.getElementById('catalogueContainer');
@@ -170,7 +200,7 @@ function renderCatalogue() {
     // Filtrer par niveau puis par recherche
     const filteredCourses = courses.filter(course => {
         const niveauOk = (currentNiveau === 'all' || course.niveau === parseInt(currentNiveau));
-        const term = searchInput.value.trim().toLowerCase();
+        const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
         const searchOk = !term || course.title.toLowerCase().includes(term) || course.description.toLowerCase().includes(term);
         return niveauOk && searchOk;
     });
@@ -207,7 +237,44 @@ function renderCatalogue() {
                 ${boutonHtml}
             </div>
         `;
+        container.appendChild(card);
+    });
+}
 
+function renderMesFormations() {
+    const container = document.getElementById('mesFormationsContainer');
+    const searchInput = document.getElementById('searchInputMesFormations');
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    // Filtrer les cours assignés + recherche éventuelle
+    const assignedCourses = courses.filter(c => c.assigned && (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
+
+    container.innerHTML = '';
+    if (assignedCourses.length === 0) {
+        container.innerHTML = '<p>Aucune formation assignée pour le moment.</p>';
+        return;
+    }
+
+    assignedCourses.forEach(course => {
+        const card = document.createElement('div');
+        card.className = 'course-card';
+        card.innerHTML = `
+            <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
+                ${course.category}
+            </div>
+            <div class="course-body">
+                <div class="course-title">${course.title}</div>
+                <p class="course-desc">${course.description}</p>
+                <div class="course-meta">
+                    <span>⏱ ${course.duree}</span>
+                    <span>${course.progress}% terminé</span>
+                </div>
+                <div class="course-progress">
+                    <div class="fill" style="width: ${course.progress}%;"></div>
+                </div>
+                <a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+            </div>
+        `;
         container.appendChild(card);
     });
 }
@@ -218,11 +285,28 @@ function renderCatalogue() {
 let progressChartInstance = null;
 
 function renderDashboard() {
-    // Met à jour les stats si nécessaire (données simulées)
+    // Met à jour la progression globale (données simulées pour l'instant)
+    // Vous pourrez plus tard remplacer par les vraies données du localStorage
+    const totalCours = courses.length;
+    const completedCours = courses.filter(c => c.progress === 100).length;
+    const progression = totalCours > 0 ? Math.round((completedCours / totalCours) * 100) : 0;
+
+    // Mettre à jour la barre de progression globale
+    const fill = document.querySelector('.progress-global .fill');
+    const span = document.querySelector('.progress-global span');
+    if (fill && span) {
+        fill.style.width = progression + '%';
+        span.textContent = progression + '%';
+    }
+
+    // Mettre à jour le nombre de formations suivies (exemple statique à adapter)
+    const formationsSuivies = document.querySelector('.stat-card .value');
+    if (formationsSuivies) {
+        // On garde la valeur actuelle pour l'instant, à améliorer plus tard
+    }
+
     // Création du graphique Chart.js
     const ctx = document.getElementById('progressChart').getContext('2d');
-
-    // Détruire l'ancien graphique s'il existe
     if (progressChartInstance) {
         progressChartInstance.destroy();
     }
@@ -233,7 +317,7 @@ function renderDashboard() {
             labels: ['Management', 'Communication', 'Efficacité', 'Animation', 'Performance'],
             datasets: [{
                 label: 'Progression par catégorie (%)',
-                data: [0, 0, 0, 0, 0],
+                data: [80, 50, 20, 40, 0],  // Données simulées
                 backgroundColor: [
                     '#00afa9',
                     '#096475',
@@ -255,17 +339,13 @@ function renderDashboard() {
         options: {
             responsive: true,
             plugins: {
-                legend: {
-                    display: false
-                }
+                legend: { display: false }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     max: 100,
-                    ticks: {
-                        callback: function(value) { return value + '%'; }
-                    }
+                    ticks: { callback: function(value) { return value + '%'; } }
                 }
             }
         }
@@ -278,49 +358,32 @@ function renderDashboard() {
 document.addEventListener('DOMContentLoaded', () => {
     checkSession();
 
-    // Par défaut, afficher le dashboard si connecté
+    // Si connecté, afficher le dashboard par défaut
     if (localStorage.getItem('sessionUser')) {
         document.querySelector('nav a[data-section="dashboard"]').classList.add('active');
         sections.dashboard.classList.add('active');
     }
 
-    // Écouteurs pour la recherche en temps réel
+    // Écouteurs pour la recherche
     document.getElementById('searchInputCatalogue').addEventListener('input', () => {
         renderCatalogue();
     });
-
     document.getElementById('searchInputMesFormations').addEventListener('input', () => {
         renderMesFormations();
     });
-    // Gestion des clics sur les niveaux dans la barre latérale
-document.querySelectorAll('#niveauList li').forEach(item => {
-    item.addEventListener('click', () => {
-        // Mettre à jour la classe active
-        document.querySelectorAll('#niveauList li').forEach(li => li.classList.remove('active'));
-        item.classList.add('active');
 
-        // Mettre à jour le filtre niveau
-        currentNiveau = item.dataset.niveau; // 'all' ou '1', '2', etc.
-        renderCatalogue();
+    // Écouteurs pour la barre latérale des niveaux
+    document.querySelectorAll('#niveauList li').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('#niveauList li').forEach(li => li.classList.remove('active'));
+            item.classList.add('active');
+            currentNiveau = item.dataset.niveau; // 'all' ou '1','2','3','4'
+            renderCatalogue();
+        });
     });
-});
-// ============================================
-// MENU UTILISATEUR DÉROULANT
-// ============================================
-const userMenu = document.querySelector('.user-menu');
-const userMenuButton = document.getElementById('userMenuButton');
-const userDropdown = document.getElementById('userDropdown');
 
-userMenuButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    userMenu.classList.toggle('open');
-    userDropdown.classList.toggle('open');
-});
-
-// Fermer le menu si on clique ailleurs
-document.addEventListener('click', (e) => {
-    if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('open');
-        userDropdown.classList.remove('open');
+    // Mettre à jour le catalogue au premier affichage si on est sur catalogue
+    if (sections.catalogue.classList.contains('active')) {
+        renderCatalogue();
     }
 });
