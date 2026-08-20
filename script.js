@@ -211,7 +211,6 @@ function renderCatalogue() {
         container.appendChild(card);
     });
 }
-}
 
 // ============================================
 // TABLEAU DE BORD (dashboard)
