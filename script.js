@@ -10,14 +10,17 @@ const users = [
 
 // Données simulées des cours (à remplacer plus tard par une vraie base)
 const courses = [
+   // Données des cours (exemples avec niveaux et autoInscription)
+let courses = [
     {
         id: 1,
         title: "Les fondamentaux du management",
         description: "Comprendre les bases du rôle de manager, la posture et les missions clés.",
         category: "Management",
-        duration: "3h",
-        progress: 100,
-        assigned: true,   // true = visible dans "Mes formations"
+        niveau: 1,
+        duree: "3h",
+        autoInscription: true,
+        assigned: true,
         color: "#00afa9"
     },
     {
@@ -25,9 +28,10 @@ const courses = [
         title: "Donner du feedback constructif",
         description: "Techniques pour formuler des retours efficaces et bienveillants.",
         category: "Communication",
-        duration: "2h",
-        progress: 60,
-        assigned: true,
+        niveau: 1,
+        duree: "2h",
+        autoInscription: true,
+        assigned: false,
         color: "#096475"
     },
     {
@@ -35,8 +39,9 @@ const courses = [
         title: "Gestion du temps et priorités",
         description: "Outils pour organiser sa journée et se concentrer sur l'essentiel.",
         category: "Efficacité",
-        duration: "1h30",
-        progress: 30,
+        niveau: 2,
+        duree: "1h30",
+        autoInscription: false,
         assigned: true,
         color: "#ffa900"
     },
@@ -45,8 +50,9 @@ const courses = [
         title: "Animer un brief d'équipe",
         description: "Méthode pour préparer et animer un brief percutant en 10 minutes.",
         category: "Animation",
-        duration: "1h",
-        progress: 0,
+        niveau: 2,
+        duree: "1h",
+        autoInscription: true,
         assigned: true,
         color: "#7200a9"
     },
@@ -55,21 +61,25 @@ const courses = [
         title: "Comprendre les KPIs",
         description: "Savoir lire et exploiter les indicateurs de performance pour piloter.",
         category: "Performance",
-        duration: "2h",
-        progress: 0,
-        assigned: false,  // non assigné, apparaît seulement dans Catalogue
+        niveau: 3,
+        duree: "2h",
+        autoInscription: false,
+        assigned: false,
         color: "#096475"
     },
     {
         id: 6,
-        title: "La pyramide de Maslow",
-        description: "Comprendre la motivation et les besoins de vos collaborateurs.",
-        category: "Motivation",
-        duration: "1h",
-        progress: 0,
+        title: "Leadership et vision",
+        description: "Développer une vision stratégique et fédérer les équipes.",
+        category: "Leadership",
+        niveau: 4,
+        duree: "4h",
+        autoInscription: false,
         assigned: false,
         color: "#7200a9"
     }
+    // État du filtre actuel
+let currentNiveau = 'all';   // 'all' ou 1,2,3,4
 ];
 
 // ============================================
@@ -160,36 +170,33 @@ navLinks.forEach(link => {
 function renderCatalogue() {
     const container = document.getElementById('catalogueContainer');
     const searchInput = document.getElementById('searchInputCatalogue');
-    renderCoursesToContainer(container, courses, searchInput.value);
-}
 
-function renderMesFormations() {
-    const container = document.getElementById('mesFormationsContainer');
-    const searchInput = document.getElementById('searchInputMesFormations');
-    const assignedCourses = courses.filter(c => c.assigned);
-    renderCoursesToContainer(container, assignedCourses, searchInput.value);
-}
-
-function renderCoursesToContainer(container, courseList, searchTerm = '') {
-    const filteredCourses = courseList.filter(course => {
-        const term = searchTerm.toLowerCase().trim();
-        if (!term) return true;
-        return (
-            course.title.toLowerCase().includes(term) ||
-            course.category.toLowerCase().includes(term) ||
-            course.description.toLowerCase().includes(term)
-        );
+    // Filtrer par niveau puis par recherche
+    const filteredCourses = courses.filter(course => {
+        const niveauOk = (currentNiveau === 'all' || course.niveau === parseInt(currentNiveau));
+        const term = searchInput.value.trim().toLowerCase();
+        const searchOk = !term || course.title.toLowerCase().includes(term) || course.description.toLowerCase().includes(term);
+        return niveauOk && searchOk;
     });
 
     container.innerHTML = '';
     if (filteredCourses.length === 0) {
-        container.innerHTML = '<p>Aucune formation ne correspond à votre recherche.</p>';
+        container.innerHTML = '<p>Aucune formation ne correspond à votre sélection.</p>';
         return;
     }
 
     filteredCourses.forEach(course => {
         const card = document.createElement('div');
         card.className = 'course-card';
+
+        // Bouton selon autoInscription et progression
+        let boutonHtml;
+        if (course.autoInscription) {
+            boutonHtml = `<a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>`;
+        } else {
+            boutonHtml = `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`;
+        }
+
         card.innerHTML = `
             <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
                 ${course.category}
@@ -198,17 +205,16 @@ function renderCoursesToContainer(container, courseList, searchTerm = '') {
                 <div class="course-title">${course.title}</div>
                 <p class="course-desc">${course.description}</p>
                 <div class="course-meta">
-                    <span>⏱ ${course.duration}</span>
-                    <span>${course.progress}% terminé</span>
+                    <span>⏱ ${course.duree}</span>
+                    <span>Niveau ${course.niveau}</span>
                 </div>
-                <div class="course-progress">
-                    <div class="fill" style="width: ${course.progress}%;"></div>
-                </div>
-                <a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+                ${boutonHtml}
             </div>
         `;
+
         container.appendChild(card);
     });
+}
 }
 
 // ============================================
@@ -290,6 +296,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('searchInputMesFormations').addEventListener('input', () => {
         renderMesFormations();
+    });
+    // Gestion des clics sur les niveaux dans la barre latérale
+document.querySelectorAll('#niveauList li').forEach(item => {
+    item.addEventListener('click', () => {
+        // Mettre à jour la classe active
+        document.querySelectorAll('#niveauList li').forEach(li => li.classList.remove('active'));
+        item.classList.add('active');
+
+        // Mettre à jour le filtre niveau
+        currentNiveau = item.dataset.niveau; // 'all' ou '1', '2', etc.
+        renderCatalogue();
     });
 });
 // ============================================
