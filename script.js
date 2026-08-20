@@ -138,6 +138,7 @@ const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
 
+
 // Vérifier si une session existe
 function checkSession() {
     const sessionUser = localStorage.getItem('sessionUser');
@@ -158,6 +159,13 @@ function showApp(user) {
     loginScreen.style.display = 'none';
     mainApp.style.display = 'flex';
     currentUserSpan.textContent = user.name;
+        // Afficher le lien Admin uniquement si l'utilisateur est admin
+    if (user.username === 'admin') {
+        adminNavLink.style.display = 'inline';
+    } else {
+        adminNavLink.style.display = 'none';
+    }
+
     renderDashboard();
 }
 
@@ -188,8 +196,13 @@ const navLinks = document.querySelectorAll('nav a[data-section]');
 const sections = {
     dashboard: document.getElementById('dashboardSection'),
     catalogue: document.getElementById('catalogueSection'),
-    'mes-formations': document.getElementById('mesFormationsSection')
+    'mes-formations': document.getElementById('mesFormationsSection'),
+    admin: document.getElementById('adminSection')
 };
+const adminNavLink = document.getElementById('adminNavLink');
+const adminSection = document.getElementById('adminSection');
+const adminCoursesTable = document.getElementById('adminCoursesTable');
+const btnAddCourse = document.getElementById('btnAddCourse');
 
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -207,6 +220,9 @@ navLinks.forEach(link => {
             renderCatalogue();
         } else if (targetSection === 'mes-formations') {
             renderMesFormations();
+            if (targetSection === 'admin') {
+    renderAdminCourses();
+}
         }
     });
 });
@@ -319,7 +335,68 @@ function closeCourseDetail() {
     selectedCourseId = null;
     renderCatalogue();
 }
+function renderAdminCourses() {
+    const tbody = adminCoursesTable;
+    tbody.innerHTML = '';
 
+    courses.forEach(course => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${course.id}</td>
+            <td>${course.title}</td>
+            <td>${course.theme}</td>
+            <td>${course.niveau}</td>
+            <td>${course.duree}</td>
+            <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
+            <td>
+                <button class="admin-btn edit" data-id="${course.id}">Modifier</button>
+                <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Ajouter des écouteurs sur les boutons (simulation)
+    tbody.querySelectorAll('.edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const courseId = parseInt(btn.dataset.id);
+            alert(`Modifier le cours ${courseId} (simulation)`);
+        });
+    });
+
+    tbody.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const courseId = parseInt(btn.dataset.id);
+            if (confirm(`Supprimer le cours ${courseId} ?`)) {
+                courses = courses.filter(c => c.id !== courseId);
+                renderAdminCourses();
+                alert('Cours supprimé (simulation)');
+            }
+        });
+    });
+}
+function setupAdminTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Retirer active des boutons et contenus
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
+
+            // Activer le bouton cliqué
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            document.getElementById(`tab-${target}`).classList.add('active');
+
+            // Si on affiche l'onglet cours, remplir le tableau
+            if (target === 'cours') {
+                renderAdminCourses();
+            }
+        });
+    });
+}
 // ============================================
 // TABLEAU DE BORD (dashboard)
 // ============================================
@@ -441,5 +518,13 @@ if (location.hash === '#catalogue') {
     document.querySelector('nav a[data-section="catalogue"]').click();
 } else if (location.hash === '#dashboard') {
     document.querySelector('nav a[data-section="dashboard"]').click();
+}
+    setupAdminTabs();
+// Remplir le tableau admin si l'utilisateur est admin et que la section admin est active
+if (localStorage.getItem('sessionUser')) {
+    const user = JSON.parse(localStorage.getItem('sessionUser'));
+    if (user.username === 'admin') {
+        renderAdminCourses();
+    }
 }
 });
