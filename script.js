@@ -213,9 +213,6 @@ const sections = {
     'mes-formations': document.getElementById('mesFormationsSection'),
     admin: document.getElementById('adminSection')
 };
-const adminSection = document.getElementById('adminSection');
-const adminCoursesTable = document.getElementById('adminCoursesTable');
-const btnAddCourse = document.getElementById('btnAddCourse');
 
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
