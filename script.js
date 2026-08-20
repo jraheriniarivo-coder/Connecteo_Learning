@@ -8,9 +8,7 @@ const users = [
     { username: "admin", password: "admin", name: "Administrateur" }
 ];
 
-// Données simulées des cours (à remplacer plus tard par une vraie base)
-const courses = [
-   // Données des cours (exemples avec niveaux et autoInscription)
+// Données des cours (exemples avec niveaux et autoInscription)
 let courses = [
     {
         id: 1,
@@ -78,8 +76,6 @@ let courses = [
         assigned: false,
         color: "#7200a9"
     }
-    // État du filtre actuel
-let currentNiveau = 'all';   // 'all' ou 1,2,3,4
 ];
 
 // ============================================
