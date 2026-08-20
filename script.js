@@ -118,6 +118,9 @@ let courses = [
 
 // État du filtre actuel pour le catalogue
 let currentNiveau = 'all';   // 'all' ou '1', '2', '3', '4'
+// État du catalogue
+let currentTheme = 'Management';   // Thématique sélectionnée par défaut
+let selectedCourseId = null;       // ID du cours sélectionné (pour le détail)
 
 // ============================================
 // GESTION DE L'AUTHENTIFICATION
@@ -227,88 +230,86 @@ document.addEventListener('click', (e) => {
 // ============================================
 function renderCatalogue() {
     const container = document.getElementById('catalogueContainer');
+    const titleEl = document.getElementById('catalogueTitle');
     const searchInput = document.getElementById('searchInputCatalogue');
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-    // Filtrer par niveau puis par recherche
-    const filteredCourses = courses.filter(course => {
-        const niveauOk = (currentNiveau === 'all' || course.niveau === parseInt(currentNiveau));
-        const term = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        const searchOk = !term || course.title.toLowerCase().includes(term) || course.description.toLowerCase().includes(term);
-        return niveauOk && searchOk;
-    });
-
-    container.innerHTML = '';
-    if (filteredCourses.length === 0) {
-        container.innerHTML = '<p>Aucune formation ne correspond à votre sélection.</p>';
-        return;
+    // Si un cours est sélectionné, on affiche le détail
+    if (selectedCourseId !== null) {
+        const course = courses.find(c => c.id === selectedCourseId);
+        if (course) {
+            renderCourseDetail(course, container, titleEl);
+            return;
+        }
     }
 
-    filteredCourses.forEach(course => {
-        const card = document.createElement('div');
-        card.className = 'course-card';
+    // Sinon, on affiche les colonnes de niveaux pour la thématique courante
+    titleEl.textContent = currentTheme;
+    const themeCourses = courses.filter(c => c.theme === currentTheme && 
+        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
 
-        // Bouton selon autoInscription et progression
-        let boutonHtml;
-        if (course.autoInscription) {
-            boutonHtml = `<a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>`;
-        } else {
-            boutonHtml = `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`;
-        }
-
-        card.innerHTML = `
-            <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
-                ${course.category}
-            </div>
-            <div class="course-body">
-                <div class="course-title">${course.title}</div>
-                <p class="course-desc">${course.description}</p>
-                <div class="course-meta">
-                    <span>⏱ ${course.duree}</span>
-                    <span>Niveau ${course.niveau}</span>
-                </div>
-                ${boutonHtml}
+    // Regrouper par niveau
+    const levels = [1, 2, 3, 4];
+    let html = '<div class="levels-grid">';
+    levels.forEach(level => {
+        const coursesForLevel = themeCourses.filter(c => c.niveau === level);
+        html += `
+            <div class="level-column">
+                <h4>Niveau ${level}</h4>
+                ${coursesForLevel.map(course => `
+                    <div class="course-item" data-course-id="${course.id}">
+                        <div class="course-item-title">${course.title}</div>
+                        <div class="course-item-duree">⏱ ${course.duree}</div>
+                    </div>
+                `).join('')}
             </div>
         `;
-        container.appendChild(card);
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Ajouter les écouteurs sur les cours
+    container.querySelectorAll('.course-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectedCourseId = parseInt(item.dataset.courseId);
+            renderCatalogue();
+        });
     });
 }
 
-function renderMesFormations() {
-    const container = document.getElementById('mesFormationsContainer');
-    const searchInput = document.getElementById('searchInputMesFormations');
-    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-
-    // Filtrer les cours assignés + recherche éventuelle
-    const assignedCourses = courses.filter(c => c.assigned && (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
-
-    container.innerHTML = '';
-    if (assignedCourses.length === 0) {
-        container.innerHTML = '<p>Aucune formation assignée pour le moment.</p>';
-        return;
-    }
-
-    assignedCourses.forEach(course => {
-        const card = document.createElement('div');
-        card.className = 'course-card';
-        card.innerHTML = `
-            <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
-                ${course.category}
-            </div>
-            <div class="course-body">
-                <div class="course-title">${course.title}</div>
-                <p class="course-desc">${course.description}</p>
-                <div class="course-meta">
-                    <span>⏱ ${course.duree}</span>
-                    <span>${course.progress}% terminé</span>
+function renderCourseDetail(course, container, titleEl) {
+    titleEl.textContent = course.title;
+    container.innerHTML = `
+        <div class="course-detail">
+            <div class="level-column">
+                <h4>Niveau ${course.niveau}</h4>
+                <div class="course-item" style="cursor: default;">
+                    <div class="course-item-title">${course.title}</div>
+                    <div class="course-item-duree">⏱ ${course.duree}</div>
                 </div>
-                <div class="course-progress">
-                    <div class="fill" style="width: ${course.progress}%;"></div>
-                </div>
-                <a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+                <button class="btn" onclick="closeCourseDetail()">← Retour</button>
             </div>
-        `;
-        container.appendChild(card);
-    });
+            <div class="course-detail-panel">
+                <h3>${course.title}</h3>
+                <p><strong>Thématique :</strong> ${course.theme}</p>
+                <p><strong>Niveau :</strong> ${course.niveau}</p>
+                <p><strong>Durée :</strong> ${course.duree}</p>
+                <p>${course.description}</p>
+                <h4>Syllabus :</h4>
+                <ul class="syllabus-list">
+                    ${course.syllabus.map(point => `<li>${point}</li>`).join('')}
+                </ul>
+                ${course.autoInscription 
+                    ? `<a href="cours-${course.id}.html" class="btn">Commencer</a>` 
+                    : `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`}
+            </div>
+        </div>
+    `;
+}
+
+function closeCourseDetail() {
+    selectedCourseId = null;
+    renderCatalogue();
 }
 
 // ============================================
@@ -397,22 +398,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Écouteurs pour la recherche
-    document.getElementById('searchInputCatalogue').addEventListener('input', () => {
-        renderCatalogue();
+   document.getElementById('searchInputCatalogue').addEventListener('input', () => {
+    selectedCourseId = null;   // on réinitialise le détail pour permettre la recherche dans les colonnes
+    renderCatalogue();
     });
     document.getElementById('searchInputMesFormations').addEventListener('input', () => {
         renderMesFormations();
     });
 
-    // Écouteurs pour la barre latérale des niveaux
-    document.querySelectorAll('#niveauList li').forEach(item => {
-        item.addEventListener('click', () => {
-            document.querySelectorAll('#niveauList li').forEach(li => li.classList.remove('active'));
-            item.classList.add('active');
-            currentNiveau = item.dataset.niveau; // 'all' ou '1','2','3','4'
-            renderCatalogue();
-        });
+    // Écouteurs pour la barre latérale des thématiques
+document.querySelectorAll('#themeList li').forEach(item => {
+    item.addEventListener('click', () => {
+        document.querySelectorAll('#themeList li').forEach(li => li.classList.remove('active'));
+        item.classList.add('active');
+        currentTheme = item.dataset.theme;
+        selectedCourseId = null;  // on réinitialise le détail
+        renderCatalogue();
     });
+});
 
     // Mettre à jour le catalogue au premier affichage si on est sur catalogue
     if (sections.catalogue.classList.contains('active')) {
