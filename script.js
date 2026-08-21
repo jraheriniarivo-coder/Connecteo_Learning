@@ -350,7 +350,7 @@ function renderCourseDetail(course, container, titleEl) {
                     ${course.syllabus.map(point => `<li>${point}</li>`).join('')}
                 </ul>
                 ${course.autoInscription 
-                    ? `<a href="cours-${course.id}.html" class="btn">Commencer</a>` 
+                    ? `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>` 
                     : `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`}
             </div>
         </div>
@@ -396,7 +396,7 @@ function renderMesFormations() {
                 <div class="course-progress">
                     <div class="fill" style="width: ${course.progress}%;"></div>
                 </div>
-                <a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+                  <a href="course-player.html?id=${course.id}" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
             </div>
         `;
         container.appendChild(card);
