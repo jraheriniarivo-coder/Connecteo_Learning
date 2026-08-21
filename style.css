@@ -1248,3 +1248,54 @@ footer {
     gap: 10px;
     justify-content: flex-end;
 }
+/* Styles pour les modules de cours dans le modal */
+.module-block {
+    background: var(--gray-light);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--primary);
+}
+
+.module-block h5 {
+    margin: 0 0 10px;
+    color: var(--primary-dark);
+    cursor: pointer;
+}
+
+.module-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.module-content input,
+.module-content textarea,
+.module-content select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.remove-module {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.question-block {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.add-question {
+    margin-top: 5px;
+}
