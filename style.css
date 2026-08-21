@@ -1299,3 +1299,34 @@ footer {
 .add-question {
     margin-top: 5px;
 }
+/* ==================== AMÉLIORATIONS GRAPHIQUES ==================== */
+.global-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.chart-container {
+    width: 100%;
+    max-width: 100%;
+    height: 400px; /* Hauteur fixe pour agrandir les graphiques */
+}
+
+.chart-container canvas {
+    min-height: 350px;
+}
+
+/* Sur les grands écrans : pie à gauche, barres à droite plus large */
+@media (min-width: 992px) {
+    .global-charts {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 30px;
+    }
+    .chart-container:first-child {
+        grid-column: 1;
+    }
+    .chart-container:last-child {
+        grid-column: 2;
+    }
+}
