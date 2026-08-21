@@ -213,19 +213,6 @@ const sections = {
     'mes-formations': document.getElementById('mesFormationsSection'),
     admin: document.getElementById('adminSection')
 };
-// Variables pour le modal de cours
-const courseModalOverlay = document.getElementById('courseModalOverlay');
-const courseModalTitle = document.getElementById('courseModalTitle');
-const courseForm = document.getElementById('courseForm');
-const courseTitleInput = document.getElementById('courseTitle');
-const courseDescriptionInput = document.getElementById('courseDescription');
-const courseThemeInput = document.getElementById('courseTheme');
-const courseNiveauInput = document.getElementById('courseNiveau');
-const courseDureeInput = document.getElementById('courseDuree');
-const courseTypeInput = document.getElementById('courseType');
-const courseAutoInscriptionInput = document.getElementById('courseAutoInscription');
-const courseColorInput = document.getElementById('courseColor');
-const courseSyllabusInput = document.getElementById('courseSyllabus');
 
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
