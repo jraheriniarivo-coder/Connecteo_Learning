@@ -945,6 +945,7 @@ function renderGlobalDashboard() {
     const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
     const themeData = themes.map(theme => courses.filter(c => c.theme === theme).length);
 
+    // Graphique en secteurs
     if (globalPieChartInstance) globalPieChartInstance.destroy();
     const pieCtx = document.getElementById('globalPieChart').getContext('2d');
     globalPieChartInstance = new Chart(pieCtx, {
@@ -952,16 +953,51 @@ function renderGlobalDashboard() {
         data: {
             labels: themes,
             datasets: [{ data: themeData, backgroundColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#cce1e1'] }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } }
         }
     });
 
+    // Graphique en barres (agrandi)
     if (globalBarChartInstance) globalBarChartInstance.destroy();
     const barCtx = document.getElementById('globalBarChart').getContext('2d');
     globalBarChartInstance = new Chart(barCtx, {
         type: 'bar',
         data: {
             labels: courses.map(c => c.title),
-            datasets: [{ label: 'Progression (%)', data: courses.map(c => c.progress), backgroundColor: '#00afa9' }]
+            datasets: [{
+                label: 'Progression (%)',
+                data: courses.map(c => c.progress),
+                backgroundColor: '#00afa9',
+                borderRadius: 8,
+                barPercentage: 0.6,
+                categoryPercentage: 0.8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'Progression par cours',
+                    font: { size: 18, weight: 'bold' }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: function(value) { return value + '%'; } }
+                }
+            }
         }
     });
 }
