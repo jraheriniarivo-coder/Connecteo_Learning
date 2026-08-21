@@ -423,6 +423,246 @@ function setupAdminTabs() {
         });
     });
 }
+// ============================================
+// GESTION DES COURS (AJOUT / MODIFICATION)
+// ============================================
+
+// Variables pour le modal de cours
+const courseModalOverlay = document.getElementById('courseModalOverlay');
+const courseModalTitle = document.getElementById('courseModalTitle');
+const courseForm = document.getElementById('courseForm');
+const courseTitleInput = document.getElementById('courseTitle');
+const courseDescriptionInput = document.getElementById('courseDescription');
+const courseThemeInput = document.getElementById('courseTheme');
+const courseNiveauInput = document.getElementById('courseNiveau');
+const courseDureeInput = document.getElementById('courseDuree');
+const courseTypeInput = document.getElementById('courseType');
+const courseAutoInscriptionInput = document.getElementById('courseAutoInscription');
+const courseColorInput = document.getElementById('courseColor');
+const courseSyllabusInput = document.getElementById('courseSyllabus');
+const courseModulesContainer = document.getElementById('courseModulesContainer');
+let modules = []; // modules du cours en cours d'édition
+
+// Fonctions d'ouverture du modal
+function openAddCourseModal() {
+    courseModalTitle.textContent = 'Ajouter un cours';
+    courseForm.reset();
+    courseColorInput.value = '#00afa9';
+    courseAutoInscriptionInput.checked = true;
+    courseForm.dataset.editId = '';
+    modules = [];
+    renderModules();
+    courseModalOverlay.style.display = 'flex';
+}
+
+function openEditCourseModal(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    courseModalTitle.textContent = `Modifier le cours : ${course.title}`;
+    courseTitleInput.value = course.title;
+    courseDescriptionInput.value = course.description;
+    courseThemeInput.value = course.theme;
+    courseNiveauInput.value = course.niveau;
+    courseDureeInput.value = course.duree;
+    courseTypeInput.value = course.type;
+    courseAutoInscriptionInput.checked = course.autoInscription;
+    courseColorInput.value = course.color;
+    courseSyllabusInput.value = course.syllabus ? course.syllabus.join('\n') : '';
+
+    modules = course.modules ? JSON.parse(JSON.stringify(course.modules)) : [];
+    renderModules();
+
+    courseForm.dataset.editId = courseId;
+    courseModalOverlay.style.display = 'flex';
+}
+
+function closeCourseModal() {
+    courseModalOverlay.style.display = 'none';
+}
+
+function saveCourse(event) {
+    event.preventDefault();
+
+    const title = courseTitleInput.value.trim();
+    const description = courseDescriptionInput.value.trim();
+    const theme = courseThemeInput.value;
+    const niveau = parseInt(courseNiveauInput.value);
+    const duree = courseDureeInput.value.trim();
+    const type = courseTypeInput.value;
+    const autoInscription = courseAutoInscriptionInput.checked;
+    const color = courseColorInput.value;
+    const syllabus = courseSyllabusInput.value
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+
+    if (!title || !description || !duree) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return;
+    }
+
+    const editId = courseForm.dataset.editId;
+
+    if (editId) {
+        const courseId = parseInt(editId);
+        const index = courses.findIndex(c => c.id === courseId);
+        if (index !== -1) {
+            courses[index] = {
+                ...courses[index],
+                title,
+                description,
+                theme,
+                niveau,
+                duree,
+                type,
+                autoInscription,
+                color,
+                syllabus,
+                modules: JSON.parse(JSON.stringify(modules))
+            };
+        }
+    } else {
+        const newId = courses.length > 0 ? Math.max(...courses.map(c => c.id)) + 1 : 1;
+        const newCourse = {
+            id: newId,
+            title,
+            description,
+            theme,
+            niveau,
+            duree,
+            type,
+            autoInscription,
+            assigned: false,
+            progress: 0,
+            color,
+            syllabus,
+            modules: JSON.parse(JSON.stringify(modules))
+        };
+        courses.push(newCourse);
+    }
+
+    saveCoursesToLocalStorage();
+    closeCourseModal();
+    renderAdminCourses();
+    renderCatalogue();
+}
+
+// Sauvegarde dans localStorage
+function saveCoursesToLocalStorage() {
+    localStorage.setItem('coursesData', JSON.stringify(courses));
+}
+
+function loadCoursesFromLocalStorage() {
+    const stored = localStorage.getItem('coursesData');
+    if (stored) {
+        try {
+            courses = JSON.parse(stored);
+        } catch (e) {
+            console.warn('Erreur de parsing des cours sauvegardés', e);
+        }
+    }
+}
+
+// ============================================
+// GESTION DES MODULES (sections, vidéos, quiz)
+// ============================================
+
+function addSectionModule() {
+    modules.push({ type: 'section', title: '', content: '' });
+    renderModules();
+}
+
+function addVideoModule() {
+    modules.push({ type: 'video', url: '' });
+    renderModules();
+}
+
+function addQuizModule() {
+    modules.push({ type: 'quiz', questions: [] });
+    renderModules();
+}
+
+function addQuestionToQuiz(quizIndex) {
+    const question = {
+        type: 'qcm_single',
+        question: '',
+        options: ['', ''],
+        correct: ''
+    };
+    modules[quizIndex].questions.push(question);
+    renderModules();
+}
+
+function addOption(moduleIndex, questionIndex) {
+    modules[moduleIndex].questions[questionIndex].options.push('');
+    renderModules();
+}
+
+function removeModule(index) {
+    modules.splice(index, 1);
+    renderModules();
+}
+
+function renderModules() {
+    courseModulesContainer.innerHTML = '';
+
+    modules.forEach((module, index) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-block';
+
+        let moduleContent = '';
+
+        if (module.type === 'section') {
+            moduleContent = `
+                <input type="text" placeholder="Titre de la section" value="${module.title}" oninput="modules[${index}].title = this.value">
+                <textarea placeholder="Contenu de la section" rows="3" oninput="modules[${index}].content = this.value">${module.content}</textarea>
+            `;
+        } else if (module.type === 'video') {
+            moduleContent = `
+                <input type="text" placeholder="URL de la vidéo (YouTube embed)" value="${module.url}" oninput="modules[${index}].url = this.value">
+            `;
+        } else if (module.type === 'quiz') {
+            moduleContent = `<div class="quiz-module-questions">`;
+            module.questions.forEach((q, qIndex) => {
+                let optionsHtml = '';
+                if (q.type === 'qcm_single' || q.type === 'qcm_multiple') {
+                    q.options.forEach((opt, optIndex) => {
+                        optionsHtml += `
+                            <input type="text" value="${opt}" placeholder="Option ${optIndex+1}" oninput="modules[${index}].questions[${qIndex}].options[${optIndex}] = this.value">
+                        `;
+                    });
+                    optionsHtml += `<button type="button" class="btn btn-secondary add-question" onclick="addOption(${index}, ${qIndex})">+ Option</button>`;
+                }
+                moduleContent += `
+                    <div class="question-block">
+                        <label>Type de question :</label>
+                        <select onchange="modules[${index}].questions[${qIndex}].type = this.value; renderModules();">
+                            <option value="qcm_single" ${q.type === 'qcm_single' ? 'selected' : ''}>QCM (une réponse)</option>
+                            <option value="qcm_multiple" ${q.type === 'qcm_multiple' ? 'selected' : ''}>QCM (plusieurs réponses)</option>
+                            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Texte libre</option>
+                        </select>
+                        <input type="text" placeholder="Question" value="${q.question}" oninput="modules[${index}].questions[${qIndex}].question = this.value">
+                        ${optionsHtml}
+                    </div>
+                `;
+            });
+            moduleContent += `<button type="button" class="btn btn-secondary add-question" onclick="addQuestionToQuiz(${index})">+ Question</button></div>`;
+        }
+
+        moduleDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h5>${module.type === 'section' ? 'Section' : module.type === 'video' ? 'Vidéo' : 'Quiz'}</h5>
+                <button type="button" class="remove-module" onclick="removeModule(${index})">Supprimer</button>
+            </div>
+            <div class="module-content">
+                ${moduleContent}
+            </div>
+        `;
+
+        courseModulesContainer.appendChild(moduleDiv);
+    });
+}
 
 // ============================================
 // TABLEAU DE BORD (dashboard)
@@ -810,127 +1050,121 @@ function renderGlobalDashboard() {
 // GESTION DES COURS (AJOUT / MODIFICATION)
 // ============================================
 
-// Ouvre le modal pour ajouter un cours
-function openAddCourseModal() {
-    courseModalTitle.textContent = 'Ajouter un cours';
-    courseForm.reset();
-    courseColorInput.value = '#00afa9';
-    courseAutoInscriptionInput.checked = true;
-    courseForm.dataset.editId = '';  // pas d'ID en mode ajout
-    courseModalOverlay.style.display = 'flex';
+
+}// Ajoute un module section
+function addSectionModule() {
+    const module = {
+        type: 'section',
+        title: '',
+        content: ''
+    };
+    modules.push(module);
+    renderModules();
 }
 
-// Ouvre le modal pour modifier un cours existant
-function openEditCourseModal(courseId) {
-    const course = courses.find(c => c.id === courseId);
-    if (!course) return;
-
-    courseModalTitle.textContent = `Modifier le cours : ${course.title}`;
-    courseTitleInput.value = course.title;
-    courseDescriptionInput.value = course.description;
-    courseThemeInput.value = course.theme;
-    courseNiveauInput.value = course.niveau;
-    courseDureeInput.value = course.duree;
-    courseTypeInput.value = course.type;
-    courseAutoInscriptionInput.checked = course.autoInscription;
-    courseColorInput.value = course.color;
-    courseSyllabusInput.value = course.syllabus.join('\n');
-
-    courseForm.dataset.editId = courseId;
-    courseModalOverlay.style.display = 'flex';
+// Ajoute un module vidéo
+function addVideoModule() {
+    const module = {
+        type: 'video',
+        url: ''
+    };
+    modules.push(module);
+    renderModules();
 }
 
-// Ferme le modal
-function closeCourseModal() {
-    courseModalOverlay.style.display = 'none';
+// Ajoute un module quiz
+function addQuizModule() {
+    const module = {
+        type: 'quiz',
+        questions: []
+    };
+    modules.push(module);
+    renderModules();
 }
 
-// Enregistre le cours (ajout ou modification)
-function saveCourse(event) {
-    event.preventDefault();
+// Ajoute une question à un quiz
+function addQuestionToQuiz(quizIndex) {
+    const question = {
+        type: 'qcm_single', // 'qcm_single', 'qcm_multiple', 'text'
+        question: '',
+        options: ['', ''], // pour QCM
+        correct: '' // pour QCM single, index de la bonne réponse ; pour multiple, tableau d'index ; pour text, réponse attendue
+    };
+    modules[quizIndex].questions.push(question);
+    renderModules();
+}
 
-    const title = courseTitleInput.value.trim();
-    const description = courseDescriptionInput.value.trim();
-    const theme = courseThemeInput.value;
-    const niveau = parseInt(courseNiveauInput.value);
-    const duree = courseDureeInput.value.trim();
-    const type = courseTypeInput.value;
-    const autoInscription = courseAutoInscriptionInput.checked;
-    const color = courseColorInput.value;
-    const syllabus = courseSyllabusInput.value
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line !== '');
+// Rendu des modules dans le conteneur
+function renderModules() {
+    courseModulesContainer.innerHTML = '';
 
-    if (!title || !description || !duree || syllabus.length === 0) {
-        alert('Veuillez remplir tous les champs obligatoires.');
-        return;
-    }
+    modules.forEach((module, index) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-block';
 
-    const editId = courseForm.dataset.editId;
+        let moduleContent = '';
 
-    if (editId) {
-        // Mode modification
-        const courseId = parseInt(editId);
-        const index = courses.findIndex(c => c.id === courseId);
-        if (index !== -1) {
-            courses[index] = {
-                ...courses[index],
-                title,
-                description,
-                theme,
-                niveau,
-                duree,
-                type,
-                autoInscription,
-                color,
-                syllabus,
-            };
+        if (module.type === 'section') {
+            moduleContent = `
+                <input type="text" placeholder="Titre de la section" value="${module.title}" oninput="modules[${index}].title = this.value">
+                <textarea placeholder="Contenu de la section" rows="3" oninput="modules[${index}].content = this.value">${module.content}</textarea>
+            `;
+        } else if (module.type === 'video') {
+            moduleContent = `
+                <input type="text" placeholder="URL de la vidéo (YouTube embed)" value="${module.url}" oninput="modules[${index}].url = this.value">
+            `;
+        } else if (module.type === 'quiz') {
+            moduleContent = `<div class="quiz-module-questions">`;
+            module.questions.forEach((q, qIndex) => {
+                let optionsHtml = '';
+                if (q.type === 'qcm_single' || q.type === 'qcm_multiple') {
+                    q.options.forEach((opt, optIndex) => {
+                        optionsHtml += `
+                            <input type="text" value="${opt}" placeholder="Option ${optIndex+1}" oninput="modules[${index}].questions[${qIndex}].options[${optIndex}] = this.value">
+                        `;
+                    });
+                    optionsHtml += `<button type="button" class="btn btn-secondary add-question" onclick="addOption(${index}, ${qIndex})">+ Option</button>`;
+                }
+                moduleContent += `
+                    <div class="question-block">
+                        <label>Type de question :</label>
+                        <select onchange="modules[${index}].questions[${qIndex}].type = this.value; renderModules();">
+                            <option value="qcm_single" ${q.type === 'qcm_single' ? 'selected' : ''}>QCM (une réponse)</option>
+                            <option value="qcm_multiple" ${q.type === 'qcm_multiple' ? 'selected' : ''}>QCM (plusieurs réponses)</option>
+                            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Texte libre</option>
+                        </select>
+                        <input type="text" placeholder="Question" value="${q.question}" oninput="modules[${index}].questions[${qIndex}].question = this.value">
+                        ${optionsHtml}
+                    </div>
+                `;
+            });
+            moduleContent += `<button type="button" class="btn btn-secondary add-question" onclick="addQuestionToQuiz(${index})">+ Question</button></div>`;
         }
-    } else {
-        // Mode ajout
-        const newId = courses.length > 0 ? Math.max(...courses.map(c => c.id)) + 1 : 1;
-        const newCourse = {
-            id: newId,
-            title,
-            description,
-            theme,
-            niveau,
-            duree,
-            type,
-            autoInscription,
-            assigned: false,
-            progress: 0,
-            color,
-            syllabus,
-        };
-        courses.push(newCourse);
-    }
 
-    // Sauvegarder dans localStorage
-    saveCoursesToLocalStorage();
+        moduleDiv.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h5>${module.type === 'section' ? 'Section' : module.type === 'video' ? 'Vidéo' : 'Quiz'}</h5>
+                <button type="button" class="remove-module" onclick="removeModule(${index})">Supprimer</button>
+            </div>
+            <div class="module-content">
+                ${moduleContent}
+            </div>
+        `;
 
-    // Fermer le modal et rafraîchir
-    closeCourseModal();
-    renderAdminCourses();
-    renderCatalogue();  // Met à jour le catalogue si visible
+        courseModulesContainer.appendChild(moduleDiv);
+    });
 }
 
-// Sauvegarde les cours dans localStorage
-function saveCoursesToLocalStorage() {
-    localStorage.setItem('coursesData', JSON.stringify(courses));
+// Supprime un module
+function removeModule(index) {
+    modules.splice(index, 1);
+    renderModules();
 }
 
-// Charge les cours depuis localStorage (au démarrage)
-function loadCoursesFromLocalStorage() {
-    const stored = localStorage.getItem('coursesData');
-    if (stored) {
-        try {
-            courses = JSON.parse(stored);
-        } catch (e) {
-            console.warn('Erreur de parsing des cours sauvegardés', e);
-        }
-    }
+// Ajoute une option à une question QCM
+function addOption(moduleIndex, questionIndex) {
+    modules[moduleIndex].questions[questionIndex].options.push('');
+    renderModules();
 }
 function renderDashboard() {
     const totalCours = courses.filter(c => c.assigned).length;
@@ -999,6 +1233,13 @@ function renderDashboard() {
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
   loadCoursesFromLocalStorage();   // Charger les cours sauvegardés
+    // Boutons pour ajouter des modules
+document.getElementById('btnAddSection').addEventListener('click', addSectionModule);
+document.getElementById('btnAddVideo').addEventListener('click', addVideoModule);
+document.getElementById('btnAddQuiz').addEventListener('click', addQuizModule);
+
+// Soumission du formulaire de cours
+courseForm.addEventListener('submit', saveCourse);
     checkSession();
 
     // Si connecté, afficher le dashboard par défaut
