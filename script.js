@@ -213,6 +213,19 @@ const sections = {
     'mes-formations': document.getElementById('mesFormationsSection'),
     admin: document.getElementById('adminSection')
 };
+// Variables pour le modal de cours
+const courseModalOverlay = document.getElementById('courseModalOverlay');
+const courseModalTitle = document.getElementById('courseModalTitle');
+const courseForm = document.getElementById('courseForm');
+const courseTitleInput = document.getElementById('courseTitle');
+const courseDescriptionInput = document.getElementById('courseDescription');
+const courseThemeInput = document.getElementById('courseTheme');
+const courseNiveauInput = document.getElementById('courseNiveau');
+const courseDureeInput = document.getElementById('courseDuree');
+const courseTypeInput = document.getElementById('courseType');
+const courseAutoInscriptionInput = document.getElementById('courseAutoInscription');
+const courseColorInput = document.getElementById('courseColor');
+const courseSyllabusInput = document.getElementById('courseSyllabus');
 
 navLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -470,7 +483,7 @@ function renderAdminCourses() {
     tbody.querySelectorAll('.edit').forEach(btn => {
         btn.addEventListener('click', () => {
             const courseId = parseInt(btn.dataset.id);
-            alert(`Modifier le cours ${courseId} (simulation)`);
+            openEditCourseModal(courseId);
         });
     });
 
@@ -708,9 +721,7 @@ function setupAdminTabs() {
 }
 
 // Bouton Ajouter un cours (simulation)
-btnAddCourse.addEventListener('click', () => {
-    alert('Formulaire d\'ajout de cours (à implémenter)');
-});
+btnAddCourse.addEventListener('click', openAddCourseModal);
 
 // Import d'utilisateurs (CSV simple)
 btnImportUsers.addEventListener('click', () => {
@@ -795,7 +806,132 @@ function renderGlobalDashboard() {
         }
     });
 }
+// ============================================
+// GESTION DES COURS (AJOUT / MODIFICATION)
+// ============================================
 
+// Ouvre le modal pour ajouter un cours
+function openAddCourseModal() {
+    courseModalTitle.textContent = 'Ajouter un cours';
+    courseForm.reset();
+    courseColorInput.value = '#00afa9';
+    courseAutoInscriptionInput.checked = true;
+    courseForm.dataset.editId = '';  // pas d'ID en mode ajout
+    courseModalOverlay.style.display = 'flex';
+}
+
+// Ouvre le modal pour modifier un cours existant
+function openEditCourseModal(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    courseModalTitle.textContent = `Modifier le cours : ${course.title}`;
+    courseTitleInput.value = course.title;
+    courseDescriptionInput.value = course.description;
+    courseThemeInput.value = course.theme;
+    courseNiveauInput.value = course.niveau;
+    courseDureeInput.value = course.duree;
+    courseTypeInput.value = course.type;
+    courseAutoInscriptionInput.checked = course.autoInscription;
+    courseColorInput.value = course.color;
+    courseSyllabusInput.value = course.syllabus.join('\n');
+
+    courseForm.dataset.editId = courseId;
+    courseModalOverlay.style.display = 'flex';
+}
+
+// Ferme le modal
+function closeCourseModal() {
+    courseModalOverlay.style.display = 'none';
+}
+
+// Enregistre le cours (ajout ou modification)
+function saveCourse(event) {
+    event.preventDefault();
+
+    const title = courseTitleInput.value.trim();
+    const description = courseDescriptionInput.value.trim();
+    const theme = courseThemeInput.value;
+    const niveau = parseInt(courseNiveauInput.value);
+    const duree = courseDureeInput.value.trim();
+    const type = courseTypeInput.value;
+    const autoInscription = courseAutoInscriptionInput.checked;
+    const color = courseColorInput.value;
+    const syllabus = courseSyllabusInput.value
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line !== '');
+
+    if (!title || !description || !duree || syllabus.length === 0) {
+        alert('Veuillez remplir tous les champs obligatoires.');
+        return;
+    }
+
+    const editId = courseForm.dataset.editId;
+
+    if (editId) {
+        // Mode modification
+        const courseId = parseInt(editId);
+        const index = courses.findIndex(c => c.id === courseId);
+        if (index !== -1) {
+            courses[index] = {
+                ...courses[index],
+                title,
+                description,
+                theme,
+                niveau,
+                duree,
+                type,
+                autoInscription,
+                color,
+                syllabus,
+            };
+        }
+    } else {
+        // Mode ajout
+        const newId = courses.length > 0 ? Math.max(...courses.map(c => c.id)) + 1 : 1;
+        const newCourse = {
+            id: newId,
+            title,
+            description,
+            theme,
+            niveau,
+            duree,
+            type,
+            autoInscription,
+            assigned: false,
+            progress: 0,
+            color,
+            syllabus,
+        };
+        courses.push(newCourse);
+    }
+
+    // Sauvegarder dans localStorage
+    saveCoursesToLocalStorage();
+
+    // Fermer le modal et rafraîchir
+    closeCourseModal();
+    renderAdminCourses();
+    renderCatalogue();  // Met à jour le catalogue si visible
+}
+
+// Sauvegarde les cours dans localStorage
+function saveCoursesToLocalStorage() {
+    localStorage.setItem('coursesData', JSON.stringify(courses));
+}
+
+// Charge les cours depuis localStorage (au démarrage)
+function loadCoursesFromLocalStorage() {
+    const stored = localStorage.getItem('coursesData');
+    if (stored) {
+        try {
+            courses = JSON.parse(stored);
+        } catch (e) {
+            console.warn('Erreur de parsing des cours sauvegardés', e);
+        }
+    }
+}
 function renderDashboard() {
     const totalCours = courses.filter(c => c.assigned).length;
     const completedCours = courses.filter(c => c.assigned && c.progress === 100).length;
@@ -862,6 +998,7 @@ function renderDashboard() {
 // INITIALISATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
+  loadCoursesFromLocalStorage();   // Charger les cours sauvegardés
     checkSession();
 
     // Si connecté, afficher le dashboard par défaut
@@ -908,4 +1045,6 @@ if (localStorage.getItem('sessionUser')) {
         renderAdminCourses();
     }
 }
+    // Écouteur pour le formulaire de cours
+    courseForm.addEventListener('submit', saveCourse);
 });
