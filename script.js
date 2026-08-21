@@ -1,6 +1,5 @@
 // ============================================
 // CONFIGURATION DES UTILISATEURS (simulation)
-// Modifiez ou ajoutez des comptes selon vos besoins
 // ============================================
 const users = [
     { username: "manager1", password: "pass1", name: "Manager 1" },
@@ -8,8 +7,9 @@ const users = [
     { username: "admin", password: "admin", name: "Administrateur" }
 ];
 
-// Données des cours (exemples avec niveaux et autoInscription)
-// Données des cours (exemples avec thèmes, niveaux, syllabus)
+// ============================================
+// DONNÉES DES COURS
+// ============================================
 let courses = [
     {
         id: 1,
@@ -22,12 +22,13 @@ let courses = [
         assigned: true,
         progress: 100,
         color: "#00afa9",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Rôle et missions du manager",
             "Les styles de management",
             "Fixer des objectifs SMART"
-        ]
+        ],
+        modules: []
     },
     {
         id: 2,
@@ -40,12 +41,13 @@ let courses = [
         assigned: true,
         progress: 0,
         color: "#096475",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Les principes du feedback",
             "La méthode DESC",
             "Mises en situation"
-        ]
+        ],
+        modules: []
     },
     {
         id: 3,
@@ -58,12 +60,13 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#ffa900",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Découverte des besoins",
             "Argumentation et traitement des objections",
             "Clôture de la vente"
-        ]
+        ],
+        modules: []
     },
     {
         id: 4,
@@ -76,12 +79,13 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#7200a9",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Les attentes du client moderne",
             "Gestion des réclamations",
             "Fidélisation et recommandation"
-        ]
+        ],
+        modules: []
     },
     {
         id: 5,
@@ -94,12 +98,13 @@ let courses = [
         assigned: true,
         progress: 0,
         color: "#00afa9",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Matrice d'Eisenhower",
             "Planification efficace",
             "Délégation"
-        ]
+        ],
+        modules: []
     },
     {
         id: 6,
@@ -112,21 +117,20 @@ let courses = [
         assigned: false,
         progress: 0,
         color: "#096475",
-        type: "obligatoire",   // ⬅️ Ajouter ceci
+        type: "obligatoire",
         syllabus: [
             "Construire une vision",
             "Communiquer la vision",
             "Incarner le changement"
-        ]
-    },
-    // Ajoutez d'autres cours selon vos besoins...
+        ],
+        modules: []
+    }
 ];
 
-// État du filtre actuel pour le catalogue
-let currentNiveau = 'all';   // 'all' ou '1', '2', '3', '4'
 // État du catalogue
-let currentTheme = 'Management';   // Thématique sélectionnée par défaut
-let selectedCourseId = null;       // ID du cours sélectionné (pour le détail)
+let currentTheme = 'Management';
+let selectedCourseId = null;
+
 // Groupes de formation (simulation)
 let groupes = [
     { id: 1, nom: "Groupe A", coursId: 1, dateDebut: "2026-09-01", dateFin: "2026-09-30", participants: [] },
@@ -135,8 +139,9 @@ let groupes = [
 
 // Utilisateurs importés (simulation)
 let importedUsers = [];
+
 // ============================================
-// GESTION DE L'AUTHENTIFICATION
+// AUTHENTIFICATION
 // ============================================
 const loginScreen = document.getElementById('loginScreen');
 const mainApp = document.getElementById('mainApp');
@@ -144,6 +149,7 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
+
 // Variables admin
 const adminNavLink = document.getElementById('adminNavLink');
 const adminSection = document.getElementById('adminSection');
@@ -153,11 +159,30 @@ const btnImportUsers = document.getElementById('btnImportUsers');
 const importUsersFile = document.getElementById('importUsersFile');
 const importedUsersList = document.getElementById('importedUsersList');
 
-// Vérifier si une session existe
+// Variables modal cours
+const courseModalOverlay = document.getElementById('courseModalOverlay');
+const courseModalTitle = document.getElementById('courseModalTitle');
+const courseForm = document.getElementById('courseForm');
+const courseTitleInput = document.getElementById('courseTitle');
+const courseDescriptionInput = document.getElementById('courseDescription');
+const courseThemeInput = document.getElementById('courseTheme');
+const courseNiveauInput = document.getElementById('courseNiveau');
+const courseDureeInput = document.getElementById('courseDuree');
+const courseTypeInput = document.getElementById('courseType');
+const courseAutoInscriptionInput = document.getElementById('courseAutoInscription');
+const courseColorInput = document.getElementById('courseColor');
+const courseSyllabusInput = document.getElementById('courseSyllabus');
+const courseModulesContainer = document.getElementById('courseModulesContainer');
+
+let modules = [];
+
+// ============================================
+// FONCTIONS DE SESSION
+// ============================================
 function checkSession() {
     const sessionUser = localStorage.getItem('sessionUser');
     if (sessionUser) {
-        loadProgressFromLocalStorage();  //
+        loadProgressFromLocalStorage();
         showApp(JSON.parse(sessionUser));
     } else {
         showLogin();
@@ -173,7 +198,7 @@ function showApp(user) {
     loginScreen.style.display = 'none';
     mainApp.style.display = 'flex';
     currentUserSpan.textContent = user.name;
-        // Afficher le lien Admin uniquement si l'utilisateur est admin
+
     if (user.username === 'admin') {
         adminNavLink.style.display = 'inline';
     } else {
@@ -204,7 +229,7 @@ logoutBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// NAVIGATION ENTRE SECTIONS
+// NAVIGATION
 // ============================================
 const navLinks = document.querySelectorAll('nav a[data-section]');
 const sections = {
@@ -219,17 +244,12 @@ navLinks.forEach(link => {
         e.preventDefault();
         const targetSection = link.dataset.section;
 
-        // Retirer la classe active de tous les liens
         navLinks.forEach(l => l.classList.remove('active'));
         link.classList.add('active');
 
-        // Masquer toutes les sections
         Object.values(sections).forEach(s => s.classList.remove('active'));
-
-        // Afficher la section cible
         sections[targetSection].classList.add('active');
 
-        // Actions spécifiques
         if (targetSection === 'catalogue') {
             renderCatalogue();
         } else if (targetSection === 'mes-formations') {
@@ -240,9 +260,7 @@ navLinks.forEach(link => {
     });
 });
 
-// ============================================
-// MENU UTILISATEUR DÉROULANT
-// ============================================
+// Menu utilisateur
 const userMenu = document.querySelector('.user-menu');
 const userMenuButton = document.getElementById('userMenuButton');
 const userDropdown = document.getElementById('userDropdown');
@@ -253,7 +271,6 @@ userMenuButton.addEventListener('click', (e) => {
     userDropdown.classList.toggle('open');
 });
 
-// Fermer le menu si on clique ailleurs
 document.addEventListener('click', (e) => {
     if (!userMenu.contains(e.target)) {
         userMenu.classList.remove('open');
@@ -262,7 +279,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ============================================
-// RENDU DES COURS (catalogue et mes formations)
+// CATALOGUE
 // ============================================
 function renderCatalogue() {
     const container = document.getElementById('catalogueContainer');
@@ -270,7 +287,6 @@ function renderCatalogue() {
     const searchInput = document.getElementById('searchInputCatalogue');
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-    // Si un cours est sélectionné, on affiche le détail
     if (selectedCourseId !== null) {
         const course = courses.find(c => c.id === selectedCourseId);
         if (course) {
@@ -279,12 +295,10 @@ function renderCatalogue() {
         }
     }
 
-    // Sinon, on affiche les colonnes de niveaux pour la thématique courante
     titleEl.textContent = currentTheme;
     const themeCourses = courses.filter(c => c.theme === currentTheme && 
         (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
 
-    // Regrouper par niveau
     const levels = [1, 2, 3, 4];
     let html = '<div class="levels-grid">';
     levels.forEach(level => {
@@ -293,19 +307,18 @@ function renderCatalogue() {
             <div class="level-column">
                 <h4>Niveau ${level}</h4>
                 ${coursesForLevel.map(course => `
-    <div class="course-item" data-course-id="${course.id}">
-        ${course.progress === 100 ? '<span class="badge-completed">Terminé ✓</span>' : ''}
-        <div class="course-item-title">${course.title}</div>
-        <div class="course-item-duree">⏱ ${course.duree}</div>
-    </div>
-`).join('')}
+                    <div class="course-item" data-course-id="${course.id}">
+                        ${course.progress === 100 ? '<span class="badge-completed">Terminé ✓</span>' : ''}
+                        <div class="course-item-title">${course.title}</div>
+                        <div class="course-item-duree">⏱ ${course.duree}</div>
+                    </div>
+                `).join('')}
             </div>
         `;
     });
     html += '</div>';
     container.innerHTML = html;
 
-    // Ajouter les écouteurs sur les cours
     container.querySelectorAll('.course-item').forEach(item => {
         item.addEventListener('click', () => {
             selectedCourseId = parseInt(item.dataset.courseId);
@@ -348,32 +361,86 @@ function closeCourseDetail() {
     selectedCourseId = null;
     renderCatalogue();
 }
+
+// ============================================
+// MES FORMATIONS
+// ============================================
+function renderMesFormations() {
+    const container = document.getElementById('mesFormationsContainer');
+    const searchInput = document.getElementById('searchInputMesFormations');
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    const assignedCourses = courses.filter(c => c.assigned && 
+        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
+
+    container.innerHTML = '';
+    if (assignedCourses.length === 0) {
+        container.innerHTML = '<p>Aucune formation assignée pour le moment.</p>';
+        return;
+    }
+
+    assignedCourses.forEach(course => {
+        const card = document.createElement('div');
+        card.className = 'course-card';
+        card.innerHTML = `
+            <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
+                ${course.theme}
+            </div>
+            <div class="course-body">
+                <div class="course-title">${course.title}</div>
+                <p class="course-desc">${course.description}</p>
+                <div class="course-meta">
+                    <span>⏱ ${course.duree}</span>
+                    <span>${course.progress}% terminé</span>
+                </div>
+                <div class="course-progress">
+                    <div class="fill" style="width: ${course.progress}%;"></div>
+                </div>
+                <a href="cours-${course.id}.html" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+// ============================================
+// ADMIN : GESTION DES COURS
+// ============================================
 function renderAdminCourses() {
     const tbody = adminCoursesTable;
     tbody.innerHTML = '';
 
     courses.forEach(course => {
         const tr = document.createElement('tr');
+        const sessionCount = groupes.filter(g => g.coursId === course.id).length;
+
         tr.innerHTML = `
-            <td>${course.id}</td>
-            <td>${course.title}</td>
             <td>${course.theme}</td>
+            <td>${course.title}</td>
             <td>${course.niveau}</td>
             <td>${course.duree}</td>
             <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
+            <td><span class="session-link" data-course-id="${course.id}">${sessionCount}</span></td>
             <td>
                 <button class="admin-btn edit" data-id="${course.id}">Modifier</button>
+                <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
                 <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
-    // Ajouter des écouteurs sur les boutons (simulation)
+    tbody.querySelectorAll('.session-link').forEach(link => {
+        link.addEventListener('click', () => {
+            const courseId = parseInt(link.dataset.courseId);
+            openSessionModal(courseId);
+        });
+    });
+
     tbody.querySelectorAll('.edit').forEach(btn => {
         btn.addEventListener('click', () => {
             const courseId = parseInt(btn.dataset.id);
-            alert(`Modifier le cours ${courseId} (simulation)`);
+            openEditCourseModal(courseId);
         });
     });
 
@@ -382,55 +449,23 @@ function renderAdminCourses() {
             const courseId = parseInt(btn.dataset.id);
             if (confirm(`Supprimer le cours ${courseId} ?`)) {
                 courses = courses.filter(c => c.id !== courseId);
+                saveCoursesToLocalStorage();
                 renderAdminCourses();
-                alert('Cours supprimé (simulation)');
+                renderCatalogue();
+                alert('Cours supprimé');
             }
         });
     });
-}
-function setupAdminTabs() {
-    const tabButtons = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
 
-    tabButtons.forEach(btn => {
+    tbody.querySelectorAll('.affect').forEach(btn => {
         btn.addEventListener('click', () => {
-            // Retirer active des boutons et contenus
-            tabButtons.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-
-            // Activer le bouton cliqué
-            btn.classList.add('active');
-            const target = btn.dataset.tab;
-            document.getElementById(`tab-${target}`).classList.add('active');
-
-            // Si on affiche l'onglet cours, remplir le tableau
-            if (target === 'cours') {
-                renderAdminCourses();
-            }
+            const courseId = parseInt(btn.dataset.id);
+            openAffectationModal(courseId);
         });
     });
 }
-// ============================================
-// GESTION DES COURS (AJOUT / MODIFICATION)
-// ============================================
 
-// Variables pour le modal de cours
-const courseModalOverlay = document.getElementById('courseModalOverlay');
-const courseModalTitle = document.getElementById('courseModalTitle');
-const courseForm = document.getElementById('courseForm');
-const courseTitleInput = document.getElementById('courseTitle');
-const courseDescriptionInput = document.getElementById('courseDescription');
-const courseThemeInput = document.getElementById('courseTheme');
-const courseNiveauInput = document.getElementById('courseNiveau');
-const courseDureeInput = document.getElementById('courseDuree');
-const courseTypeInput = document.getElementById('courseType');
-const courseAutoInscriptionInput = document.getElementById('courseAutoInscription');
-const courseColorInput = document.getElementById('courseColor');
-const courseSyllabusInput = document.getElementById('courseSyllabus');
-const courseModulesContainer = document.getElementById('courseModulesContainer');
-let modules = []; // modules du cours en cours d'édition
-
-// Fonctions d'ouverture du modal
+// Modal d'ajout/édition
 function openAddCourseModal() {
     courseModalTitle.textContent = 'Ajouter un cours';
     courseForm.reset();
@@ -535,26 +570,9 @@ function saveCourse(event) {
     renderCatalogue();
 }
 
-// Sauvegarde dans localStorage
-function saveCoursesToLocalStorage() {
-    localStorage.setItem('coursesData', JSON.stringify(courses));
-}
-
-function loadCoursesFromLocalStorage() {
-    const stored = localStorage.getItem('coursesData');
-    if (stored) {
-        try {
-            courses = JSON.parse(stored);
-        } catch (e) {
-            console.warn('Erreur de parsing des cours sauvegardés', e);
-        }
-    }
-}
-
 // ============================================
-// GESTION DES MODULES (sections, vidéos, quiz)
+// MODULES DU COURS
 // ============================================
-
 function addSectionModule() {
     modules.push({ type: 'section', title: '', content: '' });
     renderModules();
@@ -652,88 +670,26 @@ function renderModules() {
 }
 
 // ============================================
-// TABLEAU DE BORD (dashboard)
+// SAUVEGARDE LOCALSTORAGE
 // ============================================
-let progressChartInstance = null;
+function saveCoursesToLocalStorage() {
+    localStorage.setItem('coursesData', JSON.stringify(courses));
+}
 
-function loadProgressFromLocalStorage() {
-    courses.forEach(course => {
-        const completed = localStorage.getItem(`cours${course.id}_completed`);
-        if (completed === 'true') {
-            course.progress = 100;
-            const score = localStorage.getItem(`cours${course.id}_score`);
-            if (score) {
-                course.score = parseInt(score);
-            }
+function loadCoursesFromLocalStorage() {
+    const stored = localStorage.getItem('coursesData');
+    if (stored) {
+        try {
+            courses = JSON.parse(stored);
+        } catch (e) {
+            console.warn('Erreur de parsing des cours sauvegardés', e);
         }
-    });
-}
-// ============================================
-// ADMINISTRATION
-// ============================================
-
-// Remplit la table des cours avec les nouvelles colonnes
-function renderAdminCourses() {
-    const tbody = adminCoursesTable;
-    tbody.innerHTML = '';
-
-    courses.forEach(course => {
-        const tr = document.createElement('tr');
-        // Compter les sessions pour ce cours (simulation : 2 pour id 1, 1 pour id 2, 0 sinon)
-        const sessionCount = groupes.filter(g => g.coursId === course.id).length;
-
-        tr.innerHTML = `
-            <td>${course.theme}</td>
-            <td>${course.title}</td>
-            <td>${course.niveau}</td>
-            <td>${course.duree}</td>
-            <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
-            <td><span class="session-link" data-course-id="${course.id}">${sessionCount}</span></td>
-            <td>
-                <button class="admin-btn edit" data-id="${course.id}">Modifier</button>
-                <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
-                <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-    // Ajouter les écouteurs sur les nombres de session
-    tbody.querySelectorAll('.session-link').forEach(link => {
-        link.addEventListener('click', () => {
-            const courseId = parseInt(link.dataset.courseId);
-            openSessionModal(courseId);
-        });
-    });
-
-    // Écouteurs pour boutons Modifier, Supprimer, Affecter
-    tbody.querySelectorAll('.edit').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const courseId = parseInt(btn.dataset.id);
-            openEditCourseModal(courseId);
-        });
-    });
-
-    tbody.querySelectorAll('.delete').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const courseId = parseInt(btn.dataset.id);
-            if (confirm(`Supprimer le cours ${courseId} ?`)) {
-                courses = courses.filter(c => c.id !== courseId);
-                renderAdminCourses();
-                alert('Cours supprimé (simulation)');
-            }
-        });
-    });
-
-    tbody.querySelectorAll('.affect').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const courseId = parseInt(btn.dataset.id);
-            openAffectationModal(courseId);
-        });
-    });
+    }
 }
 
-// Ouvre une modal affichant les sessions d'un cours
+// ============================================
+// ADMIN : SESSIONS, AFFECTATIONS, UTILISATEURS, GLOBAL
+// ============================================
 function openSessionModal(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
@@ -758,7 +714,6 @@ function openSessionModal(courseId) {
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 
-    // Écouteur sur le nom du groupe pour voir les participants
     document.querySelectorAll('.session-group-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -768,7 +723,6 @@ function openSessionModal(courseId) {
     });
 }
 
-// Affiche les détails d'un groupe (participants, statuts)
 function openGroupDetail(groupId) {
     const group = groupes.find(g => g.id === groupId);
     if (!group) return;
@@ -792,7 +746,6 @@ function openGroupDetail(groupId) {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
-// Ouvre le modal d'affectation (Liste / Fichier)
 function openAffectationModal(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
@@ -806,9 +759,7 @@ function openAffectationModal(courseId) {
                     <button class="btn" id="btnChoiceList">📋 Liste</button>
                     <button class="btn" id="btnChoiceFile">📁 Fichier</button>
                 </div>
-                <div id="affectationContent">
-                    <!-- Zone dynamique -->
-                </div>
+                <div id="affectationContent"></div>
                 <div class="modal-actions">
                     <button class="btn" onclick="closeModal('affectationModalOverlay')">Fermer</button>
                 </div>
@@ -825,10 +776,8 @@ function openAffectationModal(courseId) {
     });
 }
 
-// Affiche la liste des collaborateurs (simulée) pour sélection
 function showAffectationList(courseId) {
     const container = document.getElementById('affectationContent');
-    // Simulons une liste de collaborateurs
     const collaborateurs = [
         { nom: "Rabe", fonction: "Manager", matricule: "M001", bu: "Comete" },
         { nom: "Rakoto", fonction: "CSA", matricule: "C002", bu: "YAS" },
@@ -882,17 +831,16 @@ function showAffectationList(courseId) {
             id: groupes.length + 1,
             nom: nomGroupe,
             coursId: courseId,
-            dateDebut: "2026-09-01",  // à remplacer par calendrier plus tard
+            dateDebut: "2026-09-01",
             dateFin: "2026-09-30",
             participants: selected
         };
         groupes.push(newGroup);
         closeModal('affectationModalOverlay');
-        renderAdminCourses(); // met à jour la colonne session
+        renderAdminCourses();
     });
 }
 
-// Affiche un champ d'import de fichier (simulation)
 function showAffectationFile(courseId) {
     const container = document.getElementById('affectationContent');
     container.innerHTML = `
@@ -918,13 +866,11 @@ function showAffectationFile(courseId) {
     });
 }
 
-// Ferme une modal
 function closeModal(overlayId) {
     const overlay = document.getElementById(overlayId);
     if (overlay) overlay.remove();
 }
 
-// Gestion des onglets admin
 function setupAdminTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -947,10 +893,8 @@ function setupAdminTabs() {
     });
 }
 
-// Bouton Ajouter un cours (simulation)
 btnAddCourse.addEventListener('click', openAddCourseModal);
 
-// Import d'utilisateurs (CSV simple)
 btnImportUsers.addEventListener('click', () => {
     importUsersFile.click();
 });
@@ -963,7 +907,6 @@ importUsersFile.addEventListener('change', (e) => {
     reader.onload = (event) => {
         const csv = event.target.result;
         const lines = csv.split('\n');
-        // Premier ligne = en-têtes
         const headers = lines[0].split(',').map(h => h.trim());
         importedUsers = [];
         for (let i = 1; i < lines.length; i++) {
@@ -990,7 +933,6 @@ function renderImportedUsers() {
     });
 }
 
-// Dashboard global (Chart.js)
 let globalPieChartInstance = null;
 let globalBarChartInstance = null;
 
@@ -1000,11 +942,8 @@ function renderGlobalDashboard() {
     const avg = courses.length > 0 ? Math.round(courses.reduce((sum, c) => sum + c.progress, 0) / courses.length) : 0;
     document.getElementById('globalCompletion').textContent = avg + '%';
 
-    // Données pour les graphiques
-    const themeData = themes.map(theme => {
-        const count = courses.filter(c => c.theme === theme).length;
-        return count;
-    });
+    const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
+    const themeData = themes.map(theme => courses.filter(c => c.theme === theme).length);
 
     if (globalPieChartInstance) globalPieChartInstance.destroy();
     const pieCtx = document.getElementById('globalPieChart').getContext('2d');
@@ -1012,10 +951,7 @@ function renderGlobalDashboard() {
         type: 'pie',
         data: {
             labels: themes,
-            datasets: [{
-                data: themeData,
-                backgroundColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#cce1e1']
-            }]
+            datasets: [{ data: themeData, backgroundColor: ['#00afa9', '#096475', '#ffa900', '#7200a9', '#cce1e1'] }]
         }
     });
 
@@ -1025,140 +961,34 @@ function renderGlobalDashboard() {
         type: 'bar',
         data: {
             labels: courses.map(c => c.title),
-            datasets: [{
-                label: 'Progression (%)',
-                data: courses.map(c => c.progress),
-                backgroundColor: '#00afa9'
-            }]
+            datasets: [{ label: 'Progression (%)', data: courses.map(c => c.progress), backgroundColor: '#00afa9' }]
         }
     });
 }
+
 // ============================================
-// GESTION DES COURS (AJOUT / MODIFICATION)
+// TABLEAU DE BORD
 // ============================================
+let progressChartInstance = null;
 
-
-}// Ajoute un module section
-function addSectionModule() {
-    const module = {
-        type: 'section',
-        title: '',
-        content: ''
-    };
-    modules.push(module);
-    renderModules();
-}
-
-// Ajoute un module vidéo
-function addVideoModule() {
-    const module = {
-        type: 'video',
-        url: ''
-    };
-    modules.push(module);
-    renderModules();
-}
-
-// Ajoute un module quiz
-function addQuizModule() {
-    const module = {
-        type: 'quiz',
-        questions: []
-    };
-    modules.push(module);
-    renderModules();
-}
-
-// Ajoute une question à un quiz
-function addQuestionToQuiz(quizIndex) {
-    const question = {
-        type: 'qcm_single', // 'qcm_single', 'qcm_multiple', 'text'
-        question: '',
-        options: ['', ''], // pour QCM
-        correct: '' // pour QCM single, index de la bonne réponse ; pour multiple, tableau d'index ; pour text, réponse attendue
-    };
-    modules[quizIndex].questions.push(question);
-    renderModules();
-}
-
-// Rendu des modules dans le conteneur
-function renderModules() {
-    courseModulesContainer.innerHTML = '';
-
-    modules.forEach((module, index) => {
-        const moduleDiv = document.createElement('div');
-        moduleDiv.className = 'module-block';
-
-        let moduleContent = '';
-
-        if (module.type === 'section') {
-            moduleContent = `
-                <input type="text" placeholder="Titre de la section" value="${module.title}" oninput="modules[${index}].title = this.value">
-                <textarea placeholder="Contenu de la section" rows="3" oninput="modules[${index}].content = this.value">${module.content}</textarea>
-            `;
-        } else if (module.type === 'video') {
-            moduleContent = `
-                <input type="text" placeholder="URL de la vidéo (YouTube embed)" value="${module.url}" oninput="modules[${index}].url = this.value">
-            `;
-        } else if (module.type === 'quiz') {
-            moduleContent = `<div class="quiz-module-questions">`;
-            module.questions.forEach((q, qIndex) => {
-                let optionsHtml = '';
-                if (q.type === 'qcm_single' || q.type === 'qcm_multiple') {
-                    q.options.forEach((opt, optIndex) => {
-                        optionsHtml += `
-                            <input type="text" value="${opt}" placeholder="Option ${optIndex+1}" oninput="modules[${index}].questions[${qIndex}].options[${optIndex}] = this.value">
-                        `;
-                    });
-                    optionsHtml += `<button type="button" class="btn btn-secondary add-question" onclick="addOption(${index}, ${qIndex})">+ Option</button>`;
-                }
-                moduleContent += `
-                    <div class="question-block">
-                        <label>Type de question :</label>
-                        <select onchange="modules[${index}].questions[${qIndex}].type = this.value; renderModules();">
-                            <option value="qcm_single" ${q.type === 'qcm_single' ? 'selected' : ''}>QCM (une réponse)</option>
-                            <option value="qcm_multiple" ${q.type === 'qcm_multiple' ? 'selected' : ''}>QCM (plusieurs réponses)</option>
-                            <option value="text" ${q.type === 'text' ? 'selected' : ''}>Texte libre</option>
-                        </select>
-                        <input type="text" placeholder="Question" value="${q.question}" oninput="modules[${index}].questions[${qIndex}].question = this.value">
-                        ${optionsHtml}
-                    </div>
-                `;
-            });
-            moduleContent += `<button type="button" class="btn btn-secondary add-question" onclick="addQuestionToQuiz(${index})">+ Question</button></div>`;
+function loadProgressFromLocalStorage() {
+    courses.forEach(course => {
+        const completed = localStorage.getItem(`cours${course.id}_completed`);
+        if (completed === 'true') {
+            course.progress = 100;
+            const score = localStorage.getItem(`cours${course.id}_score`);
+            if (score) {
+                course.score = parseInt(score);
+            }
         }
-
-        moduleDiv.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h5>${module.type === 'section' ? 'Section' : module.type === 'video' ? 'Vidéo' : 'Quiz'}</h5>
-                <button type="button" class="remove-module" onclick="removeModule(${index})">Supprimer</button>
-            </div>
-            <div class="module-content">
-                ${moduleContent}
-            </div>
-        `;
-
-        courseModulesContainer.appendChild(moduleDiv);
     });
 }
 
-// Supprime un module
-function removeModule(index) {
-    modules.splice(index, 1);
-    renderModules();
-}
-
-// Ajoute une option à une question QCM
-function addOption(moduleIndex, questionIndex) {
-    modules[moduleIndex].questions[questionIndex].options.push('');
-    renderModules();
-}
 function renderDashboard() {
     const totalCours = courses.filter(c => c.assigned).length;
     const completedCours = courses.filter(c => c.assigned && c.progress === 100).length;
     const progression = totalCours > 0 ? Math.round((completedCours / totalCours) * 100) : 0;
 
-    // Mettre à jour la barre de progression globale
     const fill = document.querySelector('.progress-global .fill');
     const span = document.querySelector('.progress-global span');
     if (fill && span) {
@@ -1166,18 +996,12 @@ function renderDashboard() {
         span.textContent = progression + '%';
     }
 
-    // Mettre à jour les statistiques
     const statValues = document.querySelectorAll('.stat-card .value');
     if (statValues.length >= 3) {
-        // Niveau (on garde l'existant ou on calcule)
-        // Points (simulé)
-        // Formations suivies
         statValues[2].textContent = `${completedCours} / ${totalCours}`;
-        // Badges (simulé)
-        statValues[3].textContent = completedCours; // par exemple
+        statValues[3].textContent = completedCours;
     }
 
-    // Graphique : nous pouvons maintenant regrouper par thème
     const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
     const themeProgress = themes.map(theme => {
         const themeCourses = courses.filter(c => c.theme === theme && c.assigned);
@@ -1219,60 +1043,55 @@ function renderDashboard() {
 // INITIALISATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-  loadCoursesFromLocalStorage();   // Charger les cours sauvegardés
-    // Boutons pour ajouter des modules
-document.getElementById('btnAddSection').addEventListener('click', addSectionModule);
-document.getElementById('btnAddVideo').addEventListener('click', addVideoModule);
-document.getElementById('btnAddQuiz').addEventListener('click', addQuizModule);
-
-// Soumission du formulaire de cours
-courseForm.addEventListener('submit', saveCourse);
+    loadCoursesFromLocalStorage();
     checkSession();
 
-    // Si connecté, afficher le dashboard par défaut
     if (localStorage.getItem('sessionUser')) {
         document.querySelector('nav a[data-section="dashboard"]').classList.add('active');
         sections.dashboard.classList.add('active');
     }
 
-    // Écouteurs pour la recherche
-   document.getElementById('searchInputCatalogue').addEventListener('input', () => {
-    selectedCourseId = null;   // on réinitialise le détail pour permettre la recherche dans les colonnes
-    renderCatalogue();
+    document.getElementById('searchInputCatalogue').addEventListener('input', () => {
+        selectedCourseId = null;
+        renderCatalogue();
     });
+
     document.getElementById('searchInputMesFormations').addEventListener('input', () => {
         renderMesFormations();
     });
 
-    // Écouteurs pour la barre latérale des thématiques
-document.querySelectorAll('#themeList li').forEach(item => {
-    item.addEventListener('click', () => {
-        document.querySelectorAll('#themeList li').forEach(li => li.classList.remove('active'));
-        item.classList.add('active');
-        currentTheme = item.dataset.theme;
-        selectedCourseId = null;  // on réinitialise le détail
-        renderCatalogue();
+    document.querySelectorAll('#themeList li').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('#themeList li').forEach(li => li.classList.remove('active'));
+            item.classList.add('active');
+            currentTheme = item.dataset.theme;
+            selectedCourseId = null;
+            renderCatalogue();
+        });
     });
-});
 
-    // Mettre à jour le catalogue au premier affichage si on est sur catalogue
     if (sections.catalogue.classList.contains('active')) {
         renderCatalogue();
     }
-    // Gérer le hash pour navigation directe
-if (location.hash === '#catalogue') {
-    document.querySelector('nav a[data-section="catalogue"]').click();
-} else if (location.hash === '#dashboard') {
-    document.querySelector('nav a[data-section="dashboard"]').click();
-}
-    setupAdminTabs();
-// Remplir le tableau admin si l'utilisateur est admin et que la section admin est active
-if (localStorage.getItem('sessionUser')) {
-    const user = JSON.parse(localStorage.getItem('sessionUser'));
-    if (user.username === 'admin') {
-        renderAdminCourses();
+
+    if (location.hash === '#catalogue') {
+        document.querySelector('nav a[data-section="catalogue"]').click();
+    } else if (location.hash === '#dashboard') {
+        document.querySelector('nav a[data-section="dashboard"]').click();
     }
-}
-    // Écouteur pour le formulaire de cours
+
+    setupAdminTabs();
+
+    document.getElementById('btnAddSection').addEventListener('click', addSectionModule);
+    document.getElementById('btnAddVideo').addEventListener('click', addVideoModule);
+    document.getElementById('btnAddQuiz').addEventListener('click', addQuizModule);
+
     courseForm.addEventListener('submit', saveCourse);
+
+    if (localStorage.getItem('sessionUser')) {
+        const user = JSON.parse(localStorage.getItem('sessionUser'));
+        if (user.username === 'admin') {
+            renderAdminCourses();
+        }
+    }
 });
