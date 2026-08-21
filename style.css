@@ -1210,3 +1210,41 @@ footer {
         flex-direction: column;
     }
 }
+/* ==================== MODAL FORMULAIRE COURS ==================== */
+.modal-box label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--gray-dark);
+}
+
+.modal-box input[type="text"],
+.modal-box select,
+.modal-box textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Mada', sans-serif;
+}
+
+.modal-box input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: none;
+    padding: 0;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.modal-box textarea {
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
