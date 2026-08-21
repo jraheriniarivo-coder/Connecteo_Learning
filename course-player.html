@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture du cours</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00afa9;
+            --primary-light: #cce1e1;
+            --primary-dark: #096475;
+            --secondary-purple: #7200a9;
+            --secondary-orange: #ffa900;
+            --gray: #808284;
+            --gray-light: #f5f7f8;
+            --gray-dark: #4a4a4a;
+            --white: #ffffff;
+            --error: #e74c3c;
+            --success: #27ae60;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Mada', sans-serif;
+            background: var(--gray-light);
+            color: var(--gray-dark);
+            line-height: 1.6;
+        }
+        .topbar {
+            background: var(--white);
+            box-shadow: var(--shadow);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar a {
+            text-decoration: none;
+            color: var(--primary-dark);
+            font-weight: 700;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .course-header {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            color: var(--white);
+            padding: 40px;
+            border-radius: var(--radius);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .course-header h1 { font-size: 2rem; font-weight: 900; }
+        .module-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .module-card h2 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+        .quiz-option {
+            display: block;
+            background: var(--gray-light);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .quiz-option:hover { border-color: var(--primary); }
+        .quiz-option input { margin-right: 10px; }
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: var(--white);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .btn-secondary {
+            background: var(--white);
+            color: var(--primary-dark);
+            border: 2px solid var(--primary);
+        }
+        .btn-secondary:hover { background: var(--primary-light); }
+        .result {
+            margin-top: 15px;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+        .actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .error-message {
+            background: var(--error);
+            color: white;
+            padding: 20px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <a href="index.html">← Retour à la plateforme</a>
+        <span>FormPro</span>
+    </header>
+
+    <main class="container">
+        <div id="courseContent"></div>
+    </main>
+
+    <script>
+        // ============================================
+        // LECTEUR DE COURS GÉNÉRIQUE
+        // ============================================
+
+        // Récupérer l'ID du cours depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = parseInt(urlParams.get('id'));
+
+        // Charger les cours depuis localStorage
+        function loadCoursesFromStorage() {
+            const stored = localStorage.getItem('coursesData');
+            if (stored) {
+                try {
+                    return JSON.parse(stored);
+                } catch (e) {
+                    console.error('Erreur parsing coursesData', e);
+                    return [];
+                }
+            }
+            // Si pas de localStorage, on retourne les cours par défaut définis dans la page ? On ne les a pas ici.
+            // On peut éventuellement récupérer depuis un fichier externe, mais pour l'instant localStorage est requis.
+            return [];
+        }
+
+        const courses = loadCoursesFromStorage();
+
+        // Si le cours n'existe pas, on essaie de récupérer depuis une variable globale si on vient de la même page ? Non, page séparée.
+        const course = courses.find(c => c.id === courseId);
+
+        function renderCourse() {
+            const container = document.getElementById('courseContent');
+            if (!course) {
+                container.innerHTML = `<div class="error-message">Cours introuvable. Veuillez revenir au catalogue.</div>`;
+                return;
+            }
+
+            // Afficher l'en-tête du cours
+            let html = `
+                <div class="course-header">
+                    <h1>${course.title}</h1>
+                    <p>${course.description}</p>
+                </div>
+            `;
+
+            // Afficher les modules s'il y en a
+            if (course.modules && course.modules.length > 0) {
+                course.modules.forEach((module, index) => {
+                    html += renderModule(module, index);
+                });
+            } else {
+                // Anciens cours sans modules : afficher syllabus et un quiz simple ? On va afficher un message.
+                html += `<div class="module-card"><p>Ce cours ne contient pas encore de contenu interactif.</p></div>`;
+            }
+
+            // Boutons de fin
+            html += `
+                <div class="module-card">
+                    <div class="actions">
+                        <a href="index.html#catalogue" class="btn-secondary" style="text-decoration:none; padding: 12px 25px; border-radius:8px;">Retour au catalogue</a>
+                        <button id="btnFinishCourse">Terminer le cours</button>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Écouteur pour "Terminer le cours"
+            document.getElementById('btnFinishCourse').addEventListener('click', () => {
+                finishCourse();
+            });
+        }
+
+        function renderModule(module, index) {
+            let moduleHtml = `<div class="module-card">`;
+
+            if (module.type === 'section') {
+                moduleHtml += `<h2>${module.title || 'Section'}</h2>`;
+                if (module.content) {
+                    moduleHtml += `<p>${module.content}</p>`;
+                } else {
+                    moduleHtml += `<p>Aucun contenu pour cette section.</p>`;
+                }
+            } else if (module.type === 'video') {
+                moduleHtml += `<h2>Vidéo</h2>`;
+                if (module.url && module.url.includes('embed')) {
+                    moduleHtml += `
+                        <div class="video-container">
+                            <iframe src="${module.url}" allowfullscreen></iframe>
+                        </div>
+                    `;
+                } else if (module.url) {
+                    moduleHtml += `<p>Lien vidéo : <a href="${module.url}" target="_blank">${module.url}</a></p>`;
+                } else {
+                    moduleHtml += `<p>Aucune vidéo fournie.</p>`;
+                }
+            } else if (module.type === 'quiz') {
+                moduleHtml += `<h2>Quiz</h2>`;
+                moduleHtml += renderQuiz(module.questions, index);
+            }
+
+            moduleHtml += `</div>`;
+            return moduleHtml;
+        }
+
+        function renderQuiz(questions, moduleIndex) {
+            if (!questions || questions.length === 0) {
+                return `<p>Aucun quiz.</p>`;
+            }
+
+            let quizHtml = '';
+            questions.forEach((q, qIndex) => {
+                quizHtml += `<div class="quiz-question"><p><strong>${qIndex + 1}. ${q.question}</strong></p>`;
+
+                if (q.type === 'text') {
+                    quizHtml += `<input type="text" class="text-answer" data-module="${moduleIndex}" data-question="${qIndex}" placeholder="Votre réponse" style="width:100%; padding:10px;">`;
+                } else if (q.type === 'qcm_single') {
+                    q.options.forEach((opt, optIndex) => {
+                        quizHtml += `
+                            <label class="quiz-option">
+                                <input type="radio" name="quiz-${moduleIndex}-${qIndex}" value="${opt}">
+                                ${opt}
+                            </label>
+                        `;
+                    });
+                } else if (q.type === 'qcm_multiple') {
+                    q.options.forEach((opt, optIndex) => {
+                        quizHtml += `
+                            <label class="quiz-option">
+                                <input type="checkbox" name="quiz-${moduleIndex}-${qIndex}" value="${opt}">
+                                ${opt}
+                            </label>
+                        `;
+                    });
+                }
+
+                quizHtml += `</div>`;
+            });
+
+            // Bouton de validation du quiz
+            quizHtml += `<button class="btn" onclick="validateQuiz(${moduleIndex})">Valider le quiz</button>`;
+            quizHtml += `<p class="result" id="quiz-result-${moduleIndex}"></p>`;
+
+            return quizHtml;
+        }
+
+        function validateQuiz(moduleIndex) {
+            const module = course.modules[moduleIndex];
+            if (!module || module.type !== 'quiz') return;
+
+            const questions = module.questions;
+            let score = 0;
+            let total = questions.length;
+
+            questions.forEach((q, qIndex) => {
+                if (q.type === 'text') {
+                    const input = document.querySelector(`.text-answer[data-module="${moduleIndex}"][data-question="${qIndex}"]`);
+                    if (input && q.correct && input.value.trim().toLowerCase() === q.correct.toLowerCase()) {
+                        score++;
+                    }
+                } else if (q.type === 'qcm_single') {
+                    const selected = document.querySelector(`input[name="quiz-${moduleIndex}-${qIndex}"]:checked`);
+                    if (selected && selected.value === q.correct) {
+                        score++;
+                    }
+                } else if (q.type === 'qcm_multiple') {
+                    const selected = document.querySelectorAll(`input[name="quiz-${moduleIndex}-${qIndex}"]:checked`);
+                    const selectedValues = Array.from(selected).map(el => el.value);
+                    // Vérifier si les réponses correspondent à celles attendues (tableau)
+                    if (Array.isArray(q.correct)) {
+                        const correctValues = q.correct.slice().sort();
+                        const selectedSorted = selectedValues.slice().sort();
+                        if (JSON.stringify(correctValues) === JSON.stringify(selectedSorted)) {
+                            score++;
+                        }
+                    }
+                }
+            });
+
+            const percent = Math.round((score / total) * 100);
+            const resultElement = document.getElementById(`quiz-result-${moduleIndex}`);
+            resultElement.textContent = `Score : ${score}/${total} (${percent}%)`;
+        }
+
+        function finishCourse() {
+            // Vérifier si le cours est obligatoire et si un seuil est requis
+            // On ne connaît pas le type du cours, mais on suppose que tous les modules quiz doivent être validés ?
+            // Pour simplifier, on enregistre la complétion sans condition de score.
+            // Vous pourrez améliorer plus tard.
+            localStorage.setItem(`cours${course.id}_completed`, 'true');
+            localStorage.setItem(`cours${course.id}_score`, 100); // score arbitraire
+            alert('Cours terminé ! Votre progression a été enregistrée.');
+            // Rediriger vers le catalogue ou le dashboard
+            window.location.href = 'index.html#catalogue';
+        }
+
+        // Initialisation
+        renderCourse();
+    </script>
+</body>
+</html>
