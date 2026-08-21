@@ -205,46 +205,7 @@
         </div>
     </div>
 </section>
-
-    <!-- Onglet Cours -->
-    <div id="tab-cours" class="tab-content active">
-        <div class="admin-actions">
-            <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
-        </div>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Titre</th>
-                    <th>Thématique</th>
-                    <th>Niveau</th>
-                    <th>Durée</th>
-                    <th>Type</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="adminCoursesTable">
-                <!-- Rempli dynamiquement -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Onglet Utilisateurs -->
-    <div id="tab-utilisateurs" class="tab-content">
-        <p>Liste des utilisateurs (à implémenter)</p>
-    </div>
-
-    <!-- Onglet Affectations -->
-    <div id="tab-affectations" class="tab-content">
-        <p>Affectations des cours (à implémenter)</p>
-    </div>
-
-    <!-- Onglet Résultats -->
-    <div id="tab-resultats" class="tab-content">
-        <p>Résultats et progression (à implémenter)</p>
-    </div>
-</section>
-        </main>
+       </main>
 
         <footer>
             <p>© 2026 Connecteo - Tous droits réservés.</p>
@@ -293,6 +254,8 @@
 
             <label>Couleur</label>
             <input type="color" id="courseColor" value="#00afa9">
+			<label>Syllabus (un point par ligne)</label>
+<textarea id="courseSyllabus" rows="5" placeholder="Rôle et missions du manager&#10;Les styles de management"></textarea>
 
             <hr style="margin: 20px 0;">
             <h4>Contenu du cours</h4>
