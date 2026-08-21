@@ -250,11 +250,12 @@
             <p>© 2026 Connecteo - Tous droits réservés.</p>
         </footer>
     </div>
-<!-- Modal pour ajouter/modifier un cours -->
+<!-- Modal pour ajouter/modifier un cours (version enrichie) -->
 <div id="courseModalOverlay" class="modal-overlay" style="display: none;">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width: 800px;">
         <h3 id="courseModalTitle">Ajouter un cours</h3>
         <form id="courseForm">
+            <!-- Champs de base -->
             <label>Titre du cours *</label>
             <input type="text" id="courseTitle" required>
 
@@ -293,8 +294,19 @@
             <label>Couleur</label>
             <input type="color" id="courseColor" value="#00afa9">
 
-            <label>Syllabus (un point par ligne)</label>
-            <textarea id="courseSyllabus" rows="5" placeholder="Rôle et missions du manager&#10;Les styles de management"></textarea>
+            <hr style="margin: 20px 0;">
+            <h4>Contenu du cours</h4>
+            <p class="scale-info">Ajoutez des sections, vidéos et quiz ci-dessous.</p>
+
+            <!-- Zone dynamique pour les modules -->
+            <div id="courseModulesContainer"></div>
+
+            <!-- Boutons pour ajouter des modules -->
+            <div class="admin-actions" style="justify-content: flex-start; gap: 10px;">
+                <button type="button" class="btn btn-secondary" id="btnAddSection">+ Section</button>
+                <button type="button" class="btn btn-secondary" id="btnAddVideo">+ Vidéo</button>
+                <button type="button" class="btn btn-secondary" id="btnAddQuiz">+ Quiz</button>
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
