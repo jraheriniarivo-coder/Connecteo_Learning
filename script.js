@@ -139,8 +139,7 @@ let courses = [
         syllabus: [],
         externalUrl: "rgpd/index.html"
     },
-        modules: []
-    ];
+        ];
 
 // État du catalogue
 let currentTheme = 'Management';
