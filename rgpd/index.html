@@ -1026,9 +1026,13 @@ function render(){
     const total = scenes.filter(x=>x.type==='quiz').length;
     const correct = Object.values(answers).filter(a=>a.correct).length;
     const pct = Math.round(correct/total*100);
-    // Validation pour la plateforme Connecteo
-    localStorage.setItem('cours7_completed', 'true');
-    localStorage.setItem('cours7_score', pct);
+    // Récupérer l'utilisateur connecté depuis la plateforme
+        const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+        if (sessionUser && sessionUser.username) {
+        const username = sessionUser.username;
+        localStorage.setItem(`cours7_completed_${username}`, 'true');
+        localStorage.setItem(`cours7_score_${username}`, pct);
+}
     const passed = pct >= PASS_THRESHOLD;
     const canRetake = !passed && attemptNumber < MAX_ATTEMPTS;
     const outOfAttempts = !passed && attemptNumber >= MAX_ATTEMPTS;

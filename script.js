@@ -1024,11 +1024,17 @@ function renderGlobalDashboard() {
 let progressChartInstance = null;
 
 function loadProgressFromLocalStorage() {
+    // Récupérer l'utilisateur connecté
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    if (!sessionUser) return; // pas de session, on ne charge rien
+
+    const username = sessionUser.username;
+
     courses.forEach(course => {
-        const completed = localStorage.getItem(`cours${course.id}_completed`);
+        const completed = localStorage.getItem(`cours${course.id}_completed_${username}`);
         if (completed === 'true') {
             course.progress = 100;
-            const score = localStorage.getItem(`cours${course.id}_score`);
+            const score = localStorage.getItem(`cours${course.id}_score_${username}`);
             if (score) {
                 course.score = parseInt(score);
             }
