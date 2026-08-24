@@ -122,10 +122,25 @@ let courses = [
             "Construire une vision",
             "Communiquer la vision",
             "Incarner le changement"
-        ],
+        ]
+    },    
+    {
+        id: 7,
+        title: "RGPD & Protection des données",
+        description: "Module interactif de sensibilisation au RGPD.",
+        theme: "Soft skills",
+        niveau: 1,
+        duree: "20 min",
+        autoInscription: true,
+        assigned: true,
+        progress: 0,
+        color: "#7200a9",
+        type: "information",
+        syllabus: [],
+        externalUrl: "rgpd/index.html"
+    },
         modules: []
-    }
-];
+    ];
 
 // État du catalogue
 let currentTheme = 'Management';
@@ -349,8 +364,10 @@ function renderCourseDetail(course, container, titleEl) {
                 <ul class="syllabus-list">
                     ${course.syllabus.map(point => `<li>${point}</li>`).join('')}
                 </ul>
-                ${course.autoInscription 
-                    ? `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>` 
+                  ${course.autoInscription 
+                    ? (course.externalUrl 
+                        ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
+                        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`) 
                     : `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`}
             </div>
         </div>
@@ -396,7 +413,7 @@ function renderMesFormations() {
                 <div class="course-progress">
                     <div class="fill" style="width: ${course.progress}%;"></div>
                 </div>
-                  <a href="course-player.html?id=${course.id}" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+                    <a href="${course.externalUrl || `course-player.html?id=${course.id}`}" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
             </div>
         `;
         container.appendChild(card);
