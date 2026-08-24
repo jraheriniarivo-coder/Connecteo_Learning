@@ -1026,6 +1026,9 @@ function render(){
     const total = scenes.filter(x=>x.type==='quiz').length;
     const correct = Object.values(answers).filter(a=>a.correct).length;
     const pct = Math.round(correct/total*100);
+    // Validation pour la plateforme Connecteo
+    localStorage.setItem('cours7_completed', 'true');
+    localStorage.setItem('cours7_score', pct);
     const passed = pct >= PASS_THRESHOLD;
     const canRetake = !passed && attemptNumber < MAX_ATTEMPTS;
     const outOfAttempts = !passed && attemptNumber >= MAX_ATTEMPTS;
