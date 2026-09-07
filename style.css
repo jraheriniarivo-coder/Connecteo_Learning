@@ -25,7 +25,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+html {
+    scrollbar-gutter: stable;
+}
 body {
     font-family: 'Mada', sans-serif;
     background: var(--gray-light);
