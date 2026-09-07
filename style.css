@@ -1391,3 +1391,32 @@ body {
     overflow-x: clip;
     overflow-y: scroll;
 }
+/* === Verrouillage absolu des onglets admin === */
+.admin-tabs {
+    display: grid;
+    grid-template-columns: 200px 200px 200px;
+    gap: 10px;
+    margin-bottom: 20px;
+    width: 620px;               /* largeur totale fixe */
+    max-width: 100%;
+}
+
+.tab-btn,
+.tab-btn.active,
+.tab-btn:focus,
+.tab-btn:hover {
+    width: 200px;
+    flex: none;
+    box-shadow: none;
+    outline: none;
+    transition: none;
+    transform: none;
+    margin: 0;
+    border-width: 2px;
+    border-style: solid;
+    font-weight: 600;
+    padding: 12px 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+}
