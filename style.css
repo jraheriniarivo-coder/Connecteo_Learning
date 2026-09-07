@@ -1376,3 +1376,18 @@ footer {
 html, body {
     overflow-x: hidden;
 }
+/* Stabilise la hauteur des onglets admin */
+.tab-content {
+    min-height: 600px;          /* Ajustez selon votre besoin */
+}
+
+/* Verrouille la largeur de la page */
+html {
+    scrollbar-gutter: stable;
+    overflow-x: clip;
+}
+
+body {
+    overflow-x: clip;
+    overflow-y: scroll;
+}
