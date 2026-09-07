@@ -60,61 +60,61 @@
                 <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
 
                 <div class="admin-tabs">
-                    <button class="tab-btn active" data-tab="cours">Gestion des cours</button>
-                    <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
-                    <button class="tab-btn" data-tab="global">Global</button>
+             <button class="tab-btn active" data-tab="global">Global</button>
+             <button class="tab-btn" data-tab="cours">Gestion des cours</button>
+             <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
                 </div>
 
-                <!-- Onglet Cours -->
-                <div id="tab-cours" class="tab-content active">
-                    <div class="admin-actions">
-                        <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
-                    </div>
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Thématique</th>
-                                <th>Titre</th>
-                                <th>Niveau</th>
-                                <th>Durée</th>
-                                <th>Type</th>
-                                <th>Session</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="adminCoursesTable">
-                            <!-- Rempli dynamiquement -->
-                        </tbody>
-                    </table>
-                </div>
+                <!-- Onglet Global (premier, actif par défaut) -->
+            <div id="tab-global" class="tab-content active">
+    <h3>Tableau de bord global</h3>
+            <div class="global-stats">
+            <div class="stat-card">Total cours : <span id="globalTotalCours">0</span></div>
+            <div class="stat-card">Total groupes : <span id="globalTotalGroupes">0</span></div>
+            <div class="stat-card">Taux de complétion moyen : <span id="globalCompletion">0%</span></div>
+            </div>
+            <div class="global-charts">
+             <div class="chart-container">
+             <canvas id="globalPieChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="globalBarChart"></canvas>
+        </div>
+    </div>
+</div>
 
-                <!-- Onglet Utilisateurs -->
-                <div id="tab-utilisateurs" class="tab-content">
-                    <div class="admin-actions">
-                        <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
-                        <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
-                    </div>
-                    <p>Liste des utilisateurs importés (stockée localement) :</p>
+                <!-- Onglet Gestion des cours -->
+                <div id="tab-cours" class="tab-content">
+    <div class="admin-actions">
+        <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
+    </div>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Thématique</th>
+                <th>Titre</th>
+                <th>Niveau</th>
+                <th>Durée</th>
+                <th>Type</th>
+                <th>Session</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="adminCoursesTable">
+            <!-- Rempli dynamiquement -->
+        </tbody>
+    </table>
+</div>
+
+            <!-- Onglet Gestion des utilisateurs -->
+        <div id="tab-utilisateurs" class="tab-content">
+        <div class="admin-actions">
+        <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
+        <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
+        </div>
+                        <p>Liste des utilisateurs importés (stockée localement) :</p>
                     <ul id="importedUsersList" style="list-style: none; padding: 0;"></ul>
-                </div>
-
-                <!-- Onglet Global -->
-                <div id="tab-global" class="tab-content">
-                    <h3>Tableau de bord global</h3>
-                    <div class="global-stats">
-                        <div class="stat-card">Total cours : <span id="globalTotalCours">0</span></div>
-                        <div class="stat-card">Total groupes : <span id="globalTotalGroupes">0</span></div>
-                        <div class="stat-card">Taux de complétion moyen : <span id="globalCompletion">0%</span></div>
-                    </div>
-                    <div class="global-charts">
-                        <div class="chart-container">
-                            <canvas id="globalPieChart"></canvas>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="globalBarChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+                </div>  
             </section>
         </main>
 
