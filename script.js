@@ -2,9 +2,9 @@
 // CONFIGURATION DES UTILISATEURS (simulation)
 // ============================================
 const users = [
-    { username: "manager1", password: "pass1", name: "Manager 1" },
-    { username: "manager2", password: "pass2", name: "Manager 2" },
-    { username: "admin", password: "admin", name: "Administrateur" }
+    { username: "manager1", password: "pass1", name: "Manager 1", role: "apprenant" },
+    { username: "manager2", password: "pass2", name: "Manager 2", role: "apprenant" },
+    { username: "admin", password: "admin", name: "Dylan", role: "admin" }
 ];
 
 // ============================================
@@ -20,14 +20,10 @@ let courses = [
         duree: "3h",
         autoInscription: true,
         assigned: true,
-        progress: 100,
+        progress: 0,
         color: "#00afa9",
         type: "obligatoire",
-        syllabus: [
-            "Rôle et missions du manager",
-            "Les styles de management",
-            "Fixer des objectifs SMART"
-        ],
+        syllabus: ["Rôle et missions du manager", "Les styles de management", "Fixer des objectifs SMART"],
         modules: []
     },
     {
@@ -42,11 +38,7 @@ let courses = [
         progress: 0,
         color: "#096475",
         type: "obligatoire",
-        syllabus: [
-            "Les principes du feedback",
-            "La méthode DESC",
-            "Mises en situation"
-        ],
+        syllabus: ["Les principes du feedback", "La méthode DESC", "Mises en situation"],
         modules: []
     },
     {
@@ -61,11 +53,7 @@ let courses = [
         progress: 0,
         color: "#ffa900",
         type: "obligatoire",
-        syllabus: [
-            "Découverte des besoins",
-            "Argumentation et traitement des objections",
-            "Clôture de la vente"
-        ],
+        syllabus: ["Découverte des besoins", "Argumentation et traitement des objections", "Clôture de la vente"],
         modules: []
     },
     {
@@ -80,11 +68,7 @@ let courses = [
         progress: 0,
         color: "#7200a9",
         type: "obligatoire",
-        syllabus: [
-            "Les attentes du client moderne",
-            "Gestion des réclamations",
-            "Fidélisation et recommandation"
-        ],
+        syllabus: ["Les attentes du client moderne", "Gestion des réclamations", "Fidélisation et recommandation"],
         modules: []
     },
     {
@@ -99,11 +83,7 @@ let courses = [
         progress: 0,
         color: "#00afa9",
         type: "obligatoire",
-        syllabus: [
-            "Matrice d'Eisenhower",
-            "Planification efficace",
-            "Délégation"
-        ],
+        syllabus: ["Matrice d'Eisenhower", "Planification efficace", "Délégation"],
         modules: []
     },
     {
@@ -118,12 +98,9 @@ let courses = [
         progress: 0,
         color: "#096475",
         type: "obligatoire",
-        syllabus: [
-            "Construire une vision",
-            "Communiquer la vision",
-            "Incarner le changement"
-        ]
-    },    
+        syllabus: ["Construire une vision", "Communiquer la vision", "Incarner le changement"],
+        modules: []
+    },
     {
         id: 7,
         title: "RGPD & Protection des données",
@@ -138,8 +115,8 @@ let courses = [
         type: "information",
         syllabus: [],
         externalUrl: "rgpd/index.html"
-    },
-        ];
+    }
+];
 
 // État du catalogue
 let currentTheme = 'Management';
@@ -155,6 +132,12 @@ let groupes = [
 let importedUsers = [];
 
 // ============================================
+// DÉTECTION DE LA PAGE
+// ============================================
+const isAdminPage = !!document.getElementById('adminSection');
+const isLearnerPage = !!document.getElementById('catalogueSection');
+
+// ============================================
 // AUTHENTIFICATION
 // ============================================
 const loginScreen = document.getElementById('loginScreen');
@@ -164,7 +147,7 @@ const loginError = document.getElementById('loginError');
 const currentUserSpan = document.getElementById('currentUser');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Variables admin
+// Variables admin (peuvent être null sur la page apprenant)
 const adminNavLink = document.getElementById('adminNavLink');
 const adminSection = document.getElementById('adminSection');
 const adminCoursesTable = document.getElementById('adminCoursesTable');
@@ -172,8 +155,6 @@ const btnAddCourse = document.getElementById('btnAddCourse');
 const btnImportUsers = document.getElementById('btnImportUsers');
 const importUsersFile = document.getElementById('importUsersFile');
 const importedUsersList = document.getElementById('importedUsersList');
-
-// Variables modal cours
 const courseModalOverlay = document.getElementById('courseModalOverlay');
 const courseModalTitle = document.getElementById('courseModalTitle');
 const courseForm = document.getElementById('courseForm');
@@ -196,8 +177,18 @@ let modules = [];
 function checkSession() {
     const sessionUser = localStorage.getItem('sessionUser');
     if (sessionUser) {
+        const user = JSON.parse(sessionUser);
+        // Redirection selon le rôle et la page
+        if (user.role === 'admin' && isLearnerPage) {
+            window.location.href = 'admin.html';
+            return;
+        }
+        if (user.role !== 'admin' && isAdminPage) {
+            window.location.href = 'index.html';
+            return;
+        }
         loadProgressFromLocalStorage();
-        showApp(JSON.parse(sessionUser));
+        showApp(user);
     } else {
         showLogin();
     }
@@ -211,15 +202,25 @@ function showLogin() {
 function showApp(user) {
     loginScreen.style.display = 'none';
     mainApp.style.display = 'flex';
-    currentUserSpan.textContent = user.name;
-
-    if (user.username === 'admin') {
-        adminNavLink.style.display = 'inline';
-    } else {
-        adminNavLink.style.display = 'none';
+    if (currentUserSpan) {
+        currentUserSpan.textContent = user.name;
     }
 
-    renderDashboard();
+    // Afficher/masquer le lien vers l'admin selon la page
+    const goToAdmin = document.getElementById('goToAdmin');
+    if (goToAdmin) {
+        goToAdmin.style.display = (user.role === 'admin') ? 'block' : 'none';
+    }
+    // Le lien "Voir l'espace apprenant" est déjà dans le menu admin
+
+    if (isAdminPage) {
+        setupAdminTabs();
+        renderAdminCourses();
+        renderGlobalDashboard();
+    } else if (isLearnerPage) {
+        renderDashboard();
+        renderCatalogue();
+    }
 }
 
 loginForm.addEventListener('submit', (e) => {
@@ -230,8 +231,11 @@ loginForm.addEventListener('submit', (e) => {
     const user = users.find(u => u.username === username && u.password === password);
     if (user) {
         localStorage.setItem('sessionUser', JSON.stringify(user));
-        showApp(user);
-        loginError.textContent = '';
+        if (user.role === 'admin') {
+            window.location.href = 'admin.html';
+        } else {
+            window.location.href = 'index.html';
+        }
     } else {
         loginError.textContent = 'Identifiant ou mot de passe incorrect.';
     }
@@ -239,63 +243,85 @@ loginForm.addEventListener('submit', (e) => {
 
 logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('sessionUser');
-    showLogin();
+    window.location.href = 'index.html'; // retour à la page de connexion apprenant
 });
 
 // ============================================
-// NAVIGATION
+// MENU UTILISATEUR (général)
 // ============================================
-const navLinks = document.querySelectorAll('nav a[data-section]');
-const sections = {
-    dashboard: document.getElementById('dashboardSection'),
-    catalogue: document.getElementById('catalogueSection'),
-    'mes-formations': document.getElementById('mesFormationsSection'),
-    admin: document.getElementById('adminSection')
-};
-
-navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetSection = link.dataset.section;
-
-        navLinks.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-
-        Object.values(sections).forEach(s => s.classList.remove('active'));
-        sections[targetSection].classList.add('active');
-
-        if (targetSection === 'catalogue') {
-            renderCatalogue();
-        } else if (targetSection === 'mes-formations') {
-            renderMesFormations();
-        } else if (targetSection === 'admin') {
-            renderAdminCourses();
-        }
-    });
-});
-
-// Menu utilisateur
 const userMenu = document.querySelector('.user-menu');
 const userMenuButton = document.getElementById('userMenuButton');
 const userDropdown = document.getElementById('userDropdown');
 
-userMenuButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    userMenu.classList.toggle('open');
-    userDropdown.classList.toggle('open');
-});
+if (userMenuButton && userMenu) {
+    userMenuButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenu.classList.toggle('open');
+        userDropdown.classList.toggle('open');
+    });
 
-document.addEventListener('click', (e) => {
-    if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('open');
-        userDropdown.classList.remove('open');
-    }
-});
+    document.addEventListener('click', (e) => {
+        if (!userMenu.contains(e.target)) {
+            userMenu.classList.remove('open');
+            userDropdown.classList.remove('open');
+        }
+    });
+}
+
+// ============================================
+// NAVIGATION APPRENANT
+// ============================================
+if (isLearnerPage) {
+    const navLinks = document.querySelectorAll('nav a[data-section]');
+    const sections = {
+        dashboard: document.getElementById('dashboardSection'),
+        catalogue: document.getElementById('catalogueSection'),
+        'mes-formations': document.getElementById('mesFormationsSection')
+    };
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetSection = link.dataset.section;
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            Object.values(sections).forEach(s => s.classList.remove('active'));
+            sections[targetSection].classList.add('active');
+
+            if (targetSection === 'catalogue') {
+                renderCatalogue();
+            } else if (targetSection === 'mes-formations') {
+                renderMesFormations();
+            }
+        });
+    });
+
+    // Écouteurs de recherche
+    document.getElementById('searchInputCatalogue').addEventListener('input', () => {
+        selectedCourseId = null;
+        renderCatalogue();
+    });
+    document.getElementById('searchInputMesFormations').addEventListener('input', () => {
+        renderMesFormations();
+    });
+
+    // Écouteurs de thématiques
+    document.querySelectorAll('#themeList li').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('#themeList li').forEach(li => li.classList.remove('active'));
+            item.classList.add('active');
+            currentTheme = item.dataset.theme;
+            selectedCourseId = null;
+            renderCatalogue();
+        });
+    });
+}
 
 // ============================================
 // CATALOGUE
 // ============================================
 function renderCatalogue() {
+    if (!isLearnerPage) return;
     const container = document.getElementById('catalogueContainer');
     const titleEl = document.getElementById('catalogueTitle');
     const searchInput = document.getElementById('searchInputCatalogue');
@@ -363,7 +389,7 @@ function renderCourseDetail(course, container, titleEl) {
                 <ul class="syllabus-list">
                     ${course.syllabus.map(point => `<li>${point}</li>`).join('')}
                 </ul>
-                  ${course.autoInscription 
+                ${course.autoInscription 
                     ? (course.externalUrl 
                         ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
                         : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`) 
@@ -382,6 +408,7 @@ function closeCourseDetail() {
 // MES FORMATIONS
 // ============================================
 function renderMesFormations() {
+    if (!isLearnerPage) return;
     const container = document.getElementById('mesFormationsContainer');
     const searchInput = document.getElementById('searchInputMesFormations');
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
@@ -412,7 +439,7 @@ function renderMesFormations() {
                 <div class="course-progress">
                     <div class="fill" style="width: ${course.progress}%;"></div>
                 </div>
-                    <a href="${course.externalUrl || `course-player.html?id=${course.id}`}" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
+                <a href="${course.externalUrl || `course-player.html?id=${course.id}`}" class="btn">${course.progress > 0 ? 'Continuer' : 'Commencer'}</a>
             </div>
         `;
         container.appendChild(card);
@@ -423,6 +450,7 @@ function renderMesFormations() {
 // ADMIN : GESTION DES COURS
 // ============================================
 function renderAdminCourses() {
+    if (!isAdminPage || !adminCoursesTable) return;
     const tbody = adminCoursesTable;
     tbody.innerHTML = '';
 
@@ -483,6 +511,7 @@ function renderAdminCourses() {
 
 // Modal d'ajout/édition
 function openAddCourseModal() {
+    if (!courseModalTitle || !courseForm) return;
     courseModalTitle.textContent = 'Ajouter un cours';
     courseForm.reset();
     courseColorInput.value = '#00afa9';
@@ -583,7 +612,7 @@ function saveCourse(event) {
     saveCoursesToLocalStorage();
     closeCourseModal();
     renderAdminCourses();
-    renderCatalogue();
+    if (isLearnerPage) renderCatalogue();
 }
 
 // ============================================
@@ -626,6 +655,7 @@ function removeModule(index) {
 }
 
 function renderModules() {
+    if (!courseModulesContainer) return;
     courseModulesContainer.innerHTML = '';
 
     modules.forEach((module, index) => {
@@ -888,6 +918,7 @@ function closeModal(overlayId) {
 }
 
 function setupAdminTabs() {
+    if (!isAdminPage) return;
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
 
@@ -909,13 +940,13 @@ function setupAdminTabs() {
     });
 }
 
-btnAddCourse.addEventListener('click', openAddCourseModal);
+btnAddCourse?.addEventListener('click', openAddCourseModal);
 
-btnImportUsers.addEventListener('click', () => {
+btnImportUsers?.addEventListener('click', () => {
     importUsersFile.click();
 });
 
-importUsersFile.addEventListener('change', (e) => {
+importUsersFile?.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -941,6 +972,7 @@ importUsersFile.addEventListener('change', (e) => {
 });
 
 function renderImportedUsers() {
+    if (!importedUsersList) return;
     importedUsersList.innerHTML = '';
     importedUsers.forEach(user => {
         const li = document.createElement('li');
@@ -953,6 +985,7 @@ let globalPieChartInstance = null;
 let globalBarChartInstance = null;
 
 function renderGlobalDashboard() {
+    if (!isAdminPage) return;
     document.getElementById('globalTotalCours').textContent = courses.length;
     document.getElementById('globalTotalGroupes').textContent = groupes.length;
     const avg = courses.length > 0 ? Math.round(courses.reduce((sum, c) => sum + c.progress, 0) / courses.length) : 0;
@@ -961,7 +994,6 @@ function renderGlobalDashboard() {
     const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
     const themeData = themes.map(theme => courses.filter(c => c.theme === theme).length);
 
-    // Graphique en secteurs
     if (globalPieChartInstance) globalPieChartInstance.destroy();
     const pieCtx = document.getElementById('globalPieChart').getContext('2d');
     globalPieChartInstance = new Chart(pieCtx, {
@@ -977,7 +1009,6 @@ function renderGlobalDashboard() {
         }
     });
 
-    // Graphique en barres (agrandi)
     if (globalBarChartInstance) globalBarChartInstance.destroy();
     const barCtx = document.getElementById('globalBarChart').getContext('2d');
     globalBarChartInstance = new Chart(barCtx, {
@@ -998,36 +1029,24 @@ function renderGlobalDashboard() {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                title: {
-                    display: true,
-                    text: 'Progression par cours',
-                    font: { size: 18, weight: 'bold' }
-                }
+                title: { display: true, text: 'Progression par cours', font: { size: 18, weight: 'bold' } }
             },
             scales: {
-                x: {
-                    ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 }
-                },
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: function(value) { return value + '%'; } }
-                }
+                x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 } },
+                y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + '%'; } } }
             }
         }
     });
 }
 
 // ============================================
-// TABLEAU DE BORD
+// TABLEAU DE BORD APPRENANT
 // ============================================
 let progressChartInstance = null;
 
 function loadProgressFromLocalStorage() {
-    // Récupérer l'utilisateur connecté
     const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    if (!sessionUser) return; // pas de session, on ne charge rien
-
+    if (!sessionUser) return;
     const username = sessionUser.username;
 
     courses.forEach(course => {
@@ -1035,14 +1054,13 @@ function loadProgressFromLocalStorage() {
         if (completed === 'true') {
             course.progress = 100;
             const score = localStorage.getItem(`cours${course.id}_score_${username}`);
-            if (score) {
-                course.score = parseInt(score);
-            }
+            if (score) course.score = parseInt(score);
         }
     });
 }
 
 function renderDashboard() {
+    if (!isLearnerPage) return;
     const totalCours = courses.filter(c => c.assigned).length;
     const completedCours = courses.filter(c => c.assigned && c.progress === 100).length;
     const progression = totalCours > 0 ? Math.round((completedCours / totalCours) * 100) : 0;
@@ -1087,11 +1105,7 @@ function renderDashboard() {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: { callback: function(value) { return value + '%'; } }
-                }
+                y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + '%'; } } }
             }
         }
     });
@@ -1104,52 +1118,20 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCoursesFromLocalStorage();
     checkSession();
 
-    if (localStorage.getItem('sessionUser')) {
-        document.querySelector('nav a[data-section="dashboard"]').classList.add('active');
-        sections.dashboard.classList.add('active');
+    if (isAdminPage) {
+        // Déjà géré dans showApp
+        if (courseForm) courseForm.addEventListener('submit', saveCourse);
+        document.getElementById('btnAddSection')?.addEventListener('click', addSectionModule);
+        document.getElementById('btnAddVideo')?.addEventListener('click', addVideoModule);
+        document.getElementById('btnAddQuiz')?.addEventListener('click', addQuizModule);
     }
 
-    document.getElementById('searchInputCatalogue').addEventListener('input', () => {
-        selectedCourseId = null;
-        renderCatalogue();
-    });
-
-    document.getElementById('searchInputMesFormations').addEventListener('input', () => {
-        renderMesFormations();
-    });
-
-    document.querySelectorAll('#themeList li').forEach(item => {
-        item.addEventListener('click', () => {
-            document.querySelectorAll('#themeList li').forEach(li => li.classList.remove('active'));
-            item.classList.add('active');
-            currentTheme = item.dataset.theme;
-            selectedCourseId = null;
-            renderCatalogue();
-        });
-    });
-
-    if (sections.catalogue.classList.contains('active')) {
-        renderCatalogue();
-    }
-
-    if (location.hash === '#catalogue') {
-        document.querySelector('nav a[data-section="catalogue"]').click();
-    } else if (location.hash === '#dashboard') {
-        document.querySelector('nav a[data-section="dashboard"]').click();
-    }
-
-    setupAdminTabs();
-
-    document.getElementById('btnAddSection').addEventListener('click', addSectionModule);
-    document.getElementById('btnAddVideo').addEventListener('click', addVideoModule);
-    document.getElementById('btnAddQuiz').addEventListener('click', addQuizModule);
-
-    courseForm.addEventListener('submit', saveCourse);
-
-    if (localStorage.getItem('sessionUser')) {
-        const user = JSON.parse(localStorage.getItem('sessionUser'));
-        if (user.username === 'admin') {
-            renderAdminCourses();
+    if (isLearnerPage) {
+        // Gérer le hash
+        if (location.hash === '#catalogue') {
+            document.querySelector('nav a[data-section="catalogue"]')?.click();
+        } else if (location.hash === '#dashboard') {
+            document.querySelector('nav a[data-section="dashboard"]')?.click();
         }
     }
 });

@@ -46,9 +46,7 @@
     <a href="#" data-section="dashboard" class="active">Accueil</a>
     <a href="#" data-section="catalogue">Catalogue</a>
     <a href="#" data-section="mes-formations">Mes formations</a>
-	<a href="#" data-section="admin" id="adminNavLink" style="display:none;">Admin</a>
 </nav>
-
 <div class="user-menu">
     <button class="user-menu-button" id="userMenuButton">
         <span class="user-avatar">👤</span>
@@ -143,141 +141,12 @@
     <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
     <div id="mesFormationsContainer" class="courses-grid"></div>
 </section>
-		<!-- Section Admin -->
-<section id="adminSection" class="section">
-    <h2>Administration</h2>
-    <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
-
-    <div class="admin-tabs">
-        <button class="tab-btn active" data-tab="cours">Gestion des cours</button>
-        <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
-        <button class="tab-btn" data-tab="global">Global</button>
-    </div>
-
-    <!-- Onglet Cours -->
-    <div id="tab-cours" class="tab-content active">
-        <div class="admin-actions">
-            <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
-        </div>
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Thématique</th>
-                    <th>Titre</th>
-                    <th>Niveau</th>
-                    <th>Durée</th>
-                    <th>Type</th>
-                    <th>Session</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="adminCoursesTable">
-                <!-- Rempli dynamiquement -->
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Onglet Utilisateurs -->
-    <div id="tab-utilisateurs" class="tab-content">
-        <div class="admin-actions">
-            <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
-            <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
-        </div>
-        <p>Liste des utilisateurs importés (stockée localement) :</p>
-        <ul id="importedUsersList" style="list-style: none; padding: 0;"></ul>
-    </div>
-
-    <!-- Onglet Global -->
-    <div id="tab-global" class="tab-content">
-        <h3>Tableau de bord global</h3>
-        <div class="global-stats">
-            <div class="stat-card">Total cours : <span id="globalTotalCours">0</span></div>
-            <div class="stat-card">Total groupes : <span id="globalTotalGroupes">0</span></div>
-            <div class="stat-card">Taux de complétion moyen : <span id="globalCompletion">0%</span></div>
-        </div>
-        <div class="global-charts">
-            <div class="chart-container">
-                <canvas id="globalPieChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="globalBarChart"></canvas>
-            </div>
-        </div>
-    </div>
-</section>
        </main>
 
         <footer>
             <p>© 2026 Connecteo - Tous droits réservés.</p>
         </footer>
     </div>
-<!-- Modal pour ajouter/modifier un cours (version enrichie) -->
-<div id="courseModalOverlay" class="modal-overlay" style="display: none;">
-    <div class="modal-box" style="max-width: 800px;">
-        <h3 id="courseModalTitle">Ajouter un cours</h3>
-        <form id="courseForm">
-            <!-- Champs de base -->
-            <label>Titre du cours *</label>
-            <input type="text" id="courseTitle" required>
-
-            <label>Description *</label>
-            <textarea id="courseDescription" rows="3" required></textarea>
-
-            <label>Thématique *</label>
-            <select id="courseTheme" required>
-                <option value="Management">Management</option>
-                <option value="Communication">Communication</option>
-                <option value="Commerciale">Commerciale</option>
-                <option value="Relation client">Relation client</option>
-                <option value="Soft skills">Soft skills</option>
-            </select>
-
-            <label>Niveau *</label>
-            <select id="courseNiveau" required>
-                <option value="1">Niveau 1</option>
-                <option value="2">Niveau 2</option>
-                <option value="3">Niveau 3</option>
-                <option value="4">Niveau 4</option>
-            </select>
-
-            <label>Durée *</label>
-            <input type="text" id="courseDuree" placeholder="ex: 2h" required>
-
-            <label>Type *</label>
-            <select id="courseType" required>
-                <option value="obligatoire">Obligatoire</option>
-                <option value="information">Information</option>
-            </select>
-
-            <label>Auto-inscription</label>
-            <input type="checkbox" id="courseAutoInscription" checked>
-
-            <label>Couleur</label>
-            <input type="color" id="courseColor" value="#00afa9">
-			<label>Syllabus (un point par ligne)</label>
-<textarea id="courseSyllabus" rows="5" placeholder="Rôle et missions du manager&#10;Les styles de management"></textarea>
-
-            <hr style="margin: 20px 0;">
-            <h4>Contenu du cours</h4>
-            <p class="scale-info">Ajoutez des sections, vidéos et quiz ci-dessous.</p>
-
-            <!-- Zone dynamique pour les modules -->
-            <div id="courseModulesContainer"></div>
-
-            <!-- Boutons pour ajouter des modules -->
-            <div class="admin-actions" style="justify-content: flex-start; gap: 10px;">
-                <button type="button" class="btn btn-secondary" id="btnAddSection">+ Section</button>
-                <button type="button" class="btn btn-secondary" id="btnAddVideo">+ Vidéo</button>
-                <button type="button" class="btn btn-secondary" id="btnAddQuiz">+ Quiz</button>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
-                <button type="submit" class="btn">Enregistrer</button>
-            </div>
-        </form>
-    </div>
-</div>
     <script src="script.js"></script>
 	
 </body>
