@@ -1373,3 +1373,6 @@ footer {
     border-color: var(--primary);
     box-shadow: none;
 }
+html, body {
+    overflow-x: hidden;
+}
