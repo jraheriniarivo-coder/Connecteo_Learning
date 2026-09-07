@@ -33,6 +33,7 @@ body {
     background: var(--gray-light);
     color: var(--gray-dark);
     line-height: 1.6;
+    overflow-y: scroll;
 }
 
 /* ==================== ÉCRAN DE CONNEXION ==================== */
