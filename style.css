@@ -1053,13 +1053,13 @@ footer {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: nowrap;      /* empêche le retour à la ligne */
+    justify-content: flex-start;  /* alignés à gauche */
     align-items: center;
 }
 
 .tab-btn {
-    flex-shrink: 0;         /* évite que les boutons rétrécissent */
-    padding: 10px 20px;
+    flex: 0 0 200px;              /* largeur fixe de 200 pixels */
+    padding: 12px 20px;
     background: var(--white);
     border: 2px solid var(--primary-light);
     border-radius: 8px;
@@ -1068,14 +1068,17 @@ footer {
     color: var(--gray-dark);
     transition: background 0.3s, color 0.3s, border-color 0.3s;
     font-family: 'Mada', sans-serif;
-    white-space: nowrap;    /* empêche le texte de passer à la ligne */
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;      /* si le texte dépasse, on met ... */
 }
 
 .tab-btn.active {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
-    box-shadow: none;       /* supprimer toute ombre ajoutée */
+    box-shadow: none;
 }
 
 .tab-btn:hover {
