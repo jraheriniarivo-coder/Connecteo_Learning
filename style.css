@@ -1053,10 +1053,12 @@ footer {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;      /* empêche le retour à la ligne */
+    align-items: center;
 }
 
 .tab-btn {
+    flex-shrink: 0;         /* évite que les boutons rétrécissent */
     padding: 10px 20px;
     background: var(--white);
     border: 2px solid var(--primary-light);
@@ -1064,14 +1066,16 @@ footer {
     cursor: pointer;
     font-weight: 600;
     color: var(--gray-dark);
-    transition: all 0.3s;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
     font-family: 'Mada', sans-serif;
+    white-space: nowrap;    /* empêche le texte de passer à la ligne */
 }
 
 .tab-btn.active {
     background: var(--primary);
     color: var(--white);
     border-color: var(--primary);
+    box-shadow: none;       /* supprimer toute ombre ajoutée */
 }
 
 .tab-btn:hover {
