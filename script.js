@@ -330,7 +330,13 @@ if (isLearnerPage) {
         });
     });
 }
-
+const goToAdminLink = document.getElementById('goToAdmin');
+if (goToAdminLink) {
+    goToAdminLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'admin.html';
+    });
+}
 // ============================================
 // CATALOGUE
 // ============================================
