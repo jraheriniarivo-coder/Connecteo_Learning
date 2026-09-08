@@ -178,15 +178,29 @@ function checkSession() {
     const sessionUser = localStorage.getItem('sessionUser');
     if (sessionUser) {
         const user = JSON.parse(sessionUser);
-        // Redirection selon le rôle et la page
-        if (user.role === 'admin' && isLearnerPage) {
+
+        // Vérifier si le paramètre ?force=learner est présent dans l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const forceLearner = urlParams.get('force') === 'learner';
+
+        // Si on est sur la page apprenant et que l'utilisateur est admin,
+        // on ne redirige pas si le paramètre force=learner est présent.
+        if (user.role === 'admin' && isLearnerPage && !forceLearner) {
             window.location.href = 'admin.html';
             return;
         }
+
+        // Si on est sur la page admin et que l'utilisateur n'est pas admin, on redirige vers l'apprenant.
         if (user.role !== 'admin' && isAdminPage) {
             window.location.href = 'index.html';
             return;
         }
+
+        // Nettoyer l'URL pour retirer le paramètre ?force=learner après usage
+        if (forceLearner) {
+            history.replaceState(null, '', window.location.pathname);
+        }
+
         loadProgressFromLocalStorage();
         showApp(user);
     } else {
