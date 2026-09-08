@@ -1420,3 +1420,31 @@ body {
     white-space: nowrap;
     overflow: hidden;
 }
+.admin-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.tab-btn {
+    width: 200px;
+    height: 44px;
+    box-sizing: border-box;
+    border: 2px solid transparent;
+    background: var(--white);
+    color: var(--gray-dark);
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    font-family: 'Mada', sans-serif;
+    border-radius: 8px;
+}
+
+.tab-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.tab-btn:hover {
+    border-color: var(--primary-light);
+}
