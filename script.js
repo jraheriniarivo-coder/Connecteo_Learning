@@ -686,12 +686,15 @@ function renderModules() {
 
         if (module.type === 'section') {
             moduleContent = `
-                <input type="text" placeholder="Titre de la section" value="${module.title}" oninput="modules[${index}].title = this.value">
-                <textarea placeholder="Contenu de la section" rows="3" oninput="modules[${index}].content = this.value">${module.content}</textarea>
+                <label>Titre de la section</label>
+                <input type="text" placeholder="Ex : Introduction" value="${module.title}" oninput="modules[${index}].title = this.value">
+                <label>Contenu</label>
+                <textarea rows="4" placeholder="Le contenu de la section..." oninput="modules[${index}].content = this.value">${module.content}</textarea>
             `;
         } else if (module.type === 'video') {
             moduleContent = `
-                <input type="text" placeholder="URL de la vidéo (YouTube embed)" value="${module.url}" oninput="modules[${index}].url = this.value">
+                <label>URL de la vidéo (YouTube)</label>
+                <input type="text" placeholder="https://www.youtube.com/embed/..." value="${module.url}" oninput="modules[${index}].url = this.value">
             `;
         } else if (module.type === 'quiz') {
             moduleContent = `<div class="quiz-module-questions">`;
@@ -700,20 +703,43 @@ function renderModules() {
                 if (q.type === 'qcm_single' || q.type === 'qcm_multiple') {
                     q.options.forEach((opt, optIndex) => {
                         optionsHtml += `
-                            <input type="text" value="${opt}" placeholder="Option ${optIndex+1}" oninput="modules[${index}].questions[${qIndex}].options[${optIndex}] = this.value">
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 5px;">
+                                <input type="text" value="${opt}" placeholder="Option ${optIndex+1}" oninput="modules[${index}].questions[${qIndex}].options[${optIndex}] = this.value" style="flex:1;">
+                                <button type="button" class="btn btn-secondary add-question" onclick="removeOption(${index}, ${qIndex}, ${optIndex})" style="padding:5px 10px;">✕</button>
+                            </div>
                         `;
                     });
                     optionsHtml += `<button type="button" class="btn btn-secondary add-question" onclick="addOption(${index}, ${qIndex})">+ Option</button>`;
+                    if (q.type === 'qcm_single') {
+                        optionsHtml += `<label style="margin-top:8px;">Bonne réponse :</label>
+                        <select onchange="modules[${index}].questions[${qIndex}].correct = this.value; renderModules();">
+                            <option value="">-- Choisir --</option>
+                            ${q.options.map((opt, i) => `<option value="${i}" ${q.correct == i ? 'selected' : ''}>Option ${i+1}</option>`).join('')}
+                        </select>`;
+                    } else {
+                        optionsHtml += `<label style="margin-top:8px;">Bonnes réponses (maintenez Ctrl pour plusieurs) :</label>
+                        <select multiple onchange="modules[${index}].questions[${qIndex}].correct = Array.from(this.selectedOptions).map(o => parseInt(o.value)); renderModules();">
+                            ${q.options.map((opt, i) => `<option value="${i}" ${Array.isArray(q.correct) && q.correct.includes(i) ? 'selected' : ''}>Option ${i+1}</option>`).join('')}
+                        </select>`;
+                    }
+                } else {
+                    optionsHtml += `<label>Réponse attendue (texte)</label>
+                    <input type="text" placeholder="Réponse correcte" value="${q.correct || ''}" oninput="modules[${index}].questions[${qIndex}].correct = this.value">`;
                 }
                 moduleContent += `
                     <div class="question-block">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>Question ${qIndex+1}</strong>
+                            <button type="button" class="remove-module" onclick="removeQuestion(${index}, ${qIndex})">Supprimer</button>
+                        </div>
                         <label>Type de question :</label>
-                        <select onchange="modules[${index}].questions[${qIndex}].type = this.value; renderModules();">
-                            <option value="qcm_single" ${q.type === 'qcm_single' ? 'selected' : ''}>QCM (une réponse)</option>
+                        <select onchange="modules[${index}].questions[${qIndex}].type = this.value; modules[${index}].questions[${qIndex}].options = (this.value === 'text' ? [] : ['', '']); renderModules();">
+                            <option value="qcm_single" ${q.type === 'qcm_single' ? 'selected' : ''}>QCM (une seule réponse)</option>
                             <option value="qcm_multiple" ${q.type === 'qcm_multiple' ? 'selected' : ''}>QCM (plusieurs réponses)</option>
                             <option value="text" ${q.type === 'text' ? 'selected' : ''}>Texte libre</option>
                         </select>
-                        <input type="text" placeholder="Question" value="${q.question}" oninput="modules[${index}].questions[${qIndex}].question = this.value">
+                        <label>Question</label>
+                        <input type="text" placeholder="Énoncé de la question" value="${q.question}" oninput="modules[${index}].questions[${qIndex}].question = this.value">
                         ${optionsHtml}
                     </div>
                 `;
@@ -723,7 +749,7 @@ function renderModules() {
 
         moduleDiv.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h5>${module.type === 'section' ? 'Section' : module.type === 'video' ? 'Vidéo' : 'Quiz'}</h5>
+                <h5>${module.type === 'section' ? '📄 Section' : module.type === 'video' ? '🎬 Vidéo' : '❓ Quiz'}</h5>
                 <button type="button" class="remove-module" onclick="removeModule(${index})">Supprimer</button>
             </div>
             <div class="module-content">
@@ -734,7 +760,20 @@ function renderModules() {
         courseModulesContainer.appendChild(moduleDiv);
     });
 }
+function removeModule(index) {
+    modules.splice(index, 1);
+    renderModules();
+}
 
+function removeOption(moduleIndex, questionIndex, optIndex) {
+    modules[moduleIndex].questions[questionIndex].options.splice(optIndex, 1);
+    renderModules();
+}
+
+function removeQuestion(moduleIndex, questionIndex) {
+    modules[moduleIndex].questions.splice(questionIndex, 1);
+    renderModules();
+}
 // ============================================
 // SAUVEGARDE LOCALSTORAGE
 // ============================================
