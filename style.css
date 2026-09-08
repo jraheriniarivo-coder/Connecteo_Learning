@@ -1448,3 +1448,40 @@ body {
 .tab-btn:hover {
     border-color: var(--primary-light);
 }
+/* === CORRECTION FINALE DES ONGLETS ADMIN === */
+.admin-tabs {
+    display: flex !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    justify-content: flex-start !important;
+}
+
+.tab-btn {
+    box-sizing: border-box !important;
+    flex: 0 0 200px !important;
+    width: 200px !important;
+    padding: 12px 0 !important;
+    margin: 0 !important;
+    border: 2px solid var(--primary-light) !important;
+    background: var(--white) !important;
+    color: var(--gray-dark) !important;
+    border-radius: 8px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-weight: 600 !important;
+    font-family: 'Mada', sans-serif !important;
+    transition: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.tab-btn.active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    border-color: var(--primary) !important;
+}
