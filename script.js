@@ -1,4 +1,3 @@
-// ============================================
 // CONFIGURATION SUPABASE
 // ============================================
 const SUPABASE_URL ="https://txdvluhigwkyrduqxmyr.supabase.co";
