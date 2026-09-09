@@ -5,8 +5,7 @@ const SUPABASE_URL ="https://txdvluhigwkyrduqxmyr.supabase.co";
 const SUPABASE_ANON_KEY ="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4ZHZsdWhpZ3dreXJkdXF4bXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMTYzMzEsImV4cCI6MjEwMjg5MjMzMX0.waXh6ptcSMocNPJMbF36IPGIH4E-EGdTvj9NwGoiSV0";
 
 // Initialisation du client Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ============================================
 // CONFIGURATION DES UTILISATEURS (simulation)
 // ============================================
@@ -427,7 +426,7 @@ function renderAdminCourses() {
         btn.addEventListener('click', async () => {
             const courseId = parseInt(btn.dataset.id);
             if (confirm(`Supprimer le cours ${courseId} ?`)) {
-                const { error } = await supabase.from('courses').delete().eq('id', courseId);
+                const { error } = await supabaseClient.from('courses').delete().eq('id', courseId);
                 if (error) alert('Erreur suppression : ' + error.message);
                 else {
                     courses = courses.filter(c => c.id !== courseId);
