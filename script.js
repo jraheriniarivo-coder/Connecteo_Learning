@@ -1122,7 +1122,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     await checkSession();
 
     if (isAdminPage) {
-        if (courseForm) courseForm.addEventListener('submit', saveCourse);
+        // Empêcher la soumission par défaut (touche Entrée)
+        courseForm?.addEventListener('submit', (e) => e.preventDefault());
+
+        // Boutons d'action du formulaire de cours
+        document.getElementById('btnSaveDraft')?.addEventListener('click', () => saveCourse('save'));
+        document.getElementById('btnSaveAndQuit')?.addEventListener('click', () => saveCourse('save_quit'));
+        document.getElementById('btnPublish')?.addEventListener('click', () => saveCourse('publish'));
+        document.getElementById('btnPublishAndAssign')?.addEventListener('click', () => saveCourse('publish_assign'));
+
+        // Boutons de modules
         document.getElementById('btnAddSection')?.addEventListener('click', addSectionModule);
         document.getElementById('btnAddVideo')?.addEventListener('click', addVideoModule);
         document.getElementById('btnAddQuiz')?.addEventListener('click', addQuizModule);
