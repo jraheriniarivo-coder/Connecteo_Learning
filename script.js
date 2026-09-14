@@ -56,6 +56,12 @@ const courseAutoInscriptionInput = document.getElementById('courseAutoInscriptio
 const courseColorInput = document.getElementById('courseColor');
 const courseSyllabusInput = document.getElementById('courseSyllabus');
 const courseModulesContainer = document.getElementById('courseModulesContainer');
+const courseVisibilityModeInput = document.getElementById('courseVisibilityMode');
+const courseAvailabilityDateInput = document.getElementById('courseAvailabilityDate');
+const btnSaveDraft = document.getElementById('btnSaveDraft');
+const btnSaveAndQuit = document.getElementById('btnSaveAndQuit');
+const btnPublish = document.getElementById('btnPublish');
+const btnPublishAndAssign = document.getElementById('btnPublishAndAssign');
 
 let modules = [];
 let currentTheme = 'Management';
@@ -148,11 +154,11 @@ if (logoutBtn) {
 // CHARGEMENT DES DONNÉES DEPUIS SUPABASE
 // ============================================
 async function loadDataFromSupabase() {
-    // Charger les cours
-    const { data: coursesData, error: coursesError } = await supabaseClient
-        .from('courses')
-        .select('*')
-        .order('id', { ascending: true });
+    let query = supabaseClient.from('courses').select('*').order('id', { ascending: true });
+if (isLearnerPage) {
+    query = query.eq('status', 'published');
+}
+const { data: coursesData, error: coursesError } = await query;
     if (coursesError) {
         console.error('Erreur chargement cours:', coursesError);
     } else {
@@ -419,6 +425,11 @@ function renderAdminCourses() {
                 <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
                 <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
             </td>
+            <td>
+                ${course.title}
+                ${course.status === 'draft' ? '<span class="badge-draft">Brouillon</span>' : ''}
+                ${course.status === 'editing' ? '<span class="badge-editing">En édition</span>' : ''}
+        </td>
         `;
         tbody.appendChild(tr);
     });
@@ -466,14 +477,22 @@ function openAddCourseModal() {
     courseColorInput.value = '#00afa9';
     courseAutoInscriptionInput.checked = true;
     courseForm.dataset.editId = '';
+    courseForm.dataset.previousStatus = '';
     modules = [];
     renderModules();
     courseModalOverlay.style.display = 'flex';
 }
 
-function openEditCourseModal(courseId) {
+async function openEditCourseModal(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
+
+    // Mémoriser le statut précédent et passer le cours en "editing" pour le retirer du catalogue
+    courseForm.dataset.previousStatus = course.status || 'draft';
+    if (course.status === 'published') {
+        await supabaseClient.from('courses').update({ status: 'editing' }).eq('id', courseId);
+        course.status = 'editing';
+    }
 
     courseModalTitle.textContent = `Modifier le cours : ${course.title}`;
     courseTitleInput.value = course.title;
@@ -485,6 +504,8 @@ function openEditCourseModal(courseId) {
     courseAutoInscriptionInput.checked = course.auto_inscription || course.autoInscription;
     courseColorInput.value = course.color;
     courseSyllabusInput.value = course.syllabus ? course.syllabus.join('\n') : '';
+    courseVisibilityModeInput.value = course.visibility_mode || 'assigned_only';
+    courseAvailabilityDateInput.value = course.availability_date || '';
 
     modules = course.modules ? JSON.parse(JSON.stringify(course.modules)) : [];
     renderModules();
@@ -497,8 +518,8 @@ function closeCourseModal() {
     courseModalOverlay.style.display = 'none';
 }
 
-async function saveCourse(event) {
-    event.preventDefault();
+async function saveCourse(action) {
+    // action = 'save' | 'save_quit' | 'publish' | 'publish_assign'
 
     const title = courseTitleInput.value.trim();
     const description = courseDescriptionInput.value.trim();
@@ -508,58 +529,86 @@ async function saveCourse(event) {
     const type = courseTypeInput.value;
     const autoInscription = courseAutoInscriptionInput.checked;
     const color = courseColorInput.value;
-    const syllabus = courseSyllabusInput.value.split('\n').map(line => line.trim()).filter(line => line !== '');
+    const syllabus = courseSyllabusInput.value.split('\n').map(l => l.trim()).filter(l => l !== '');
+    const visibilityMode = courseVisibilityModeInput.value;
+    const availabilityDate = courseAvailabilityDateInput.value || null;
 
     if (!title || !description || !duree) {
         alert('Veuillez remplir tous les champs obligatoires.');
         return;
     }
 
+    // Déterminer le statut à appliquer
+    let newStatus;
+    if (action === 'save' || action === 'save_quit') {
+        newStatus = (courseForm.dataset.previousStatus && courseForm.dataset.previousStatus !== 'editing')
+            ? courseForm.dataset.previousStatus
+            : 'draft';
+    } else {
+        newStatus = 'published';
+    }
+
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    const createdBy = sessionUser ? sessionUser.name : 'Inconnu';
+
     const editId = courseForm.dataset.editId;
 
     if (editId) {
+        // Mise à jour
         const courseId = parseInt(editId);
         const { error } = await supabaseClient
             .from('courses')
             .update({
-                title,
-                description,
-                theme,
-                niveau,
-                duree,
-                type,
+                title, description, theme, niveau, duree, type,
                 auto_inscription: autoInscription,
-                color,
-                syllabus,
-                modules: JSON.parse(JSON.stringify(modules))
+                color, syllabus,
+                modules: JSON.parse(JSON.stringify(modules)),
+                status: newStatus,
+                visibility_mode: visibilityMode,
+                availability_date: availabilityDate
             })
             .eq('id', courseId);
-        if (error) alert('Erreur mise à jour : ' + error.message);
+        if (error) { alert('Erreur mise à jour : ' + error.message); return; }
     } else {
+        // Insertion
         const { error } = await supabaseClient
             .from('courses')
             .insert({
-                title,
-                description,
-                theme,
-                niveau,
-                duree,
-                type,
+                title, description, theme, niveau, duree, type,
                 auto_inscription: autoInscription,
-                assigned: true,
-                color,
-                syllabus,
-                modules: JSON.parse(JSON.stringify(modules))
+                assigned: false,
+                color, syllabus,
+                modules: JSON.parse(JSON.stringify(modules)),
+                status: newStatus,
+                created_by: createdBy,
+                visibility_mode: visibilityMode,
+                availability_date: availabilityDate
             });
-        if (error) alert('Erreur création : ' + error.message);
+        if (error) { alert('Erreur création : ' + error.message); return; }
     }
 
-    closeCourseModal();
     await loadDataFromSupabase();
-    renderAdminCourses();
-    if (isLearnerPage) renderCatalogue();
-}
 
+    // Comportement selon l'action
+    if (action === 'save') {
+        // On garde le modal ouvert. On met à jour l'editId si c'était une insertion.
+        const newlyCreated = courses.find(c => c.title === title && c.status === newStatus);
+        if (!editId && newlyCreated) courseForm.dataset.editId = newlyCreated.id;
+        alert('Enregistré à ' + new Date().toLocaleTimeString());
+    } else if (action === 'save_quit') {
+        closeCourseModal();
+        renderAdminCourses();
+    } else if (action === 'publish') {
+        closeCourseModal();
+        renderAdminCourses();
+    } else if (action === 'publish_assign') {
+        closeCourseModal();
+        renderAdminCourses();
+        // Trouver le cours publié et ouvrir la fenêtre d'affectation
+        const published = courses.find(c => c.title === title && c.status === 'published');
+        if (published) openAffectationModal(published.id);
+    }
+}
 // ============================================
 // MODULES DU COURS
 // ============================================

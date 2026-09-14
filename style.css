@@ -1050,6 +1050,27 @@ footer {
     z-index: 2;
     box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
+.badge-draft {
+    display: inline-block;
+    background: #ffa900;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+.badge-editing {
+    display: inline-block;
+    background: #7200a9;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-left: 6px;
+}
 /* ==================== SECTION ADMIN ==================== */
 
 .admin-tabs {

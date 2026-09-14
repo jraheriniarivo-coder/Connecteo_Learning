@@ -169,7 +169,16 @@
 
                 <label>Syllabus (un point par ligne)</label>
                 <textarea id="courseSyllabus" rows="5" placeholder="Rôle et missions du manager&#10;Les styles de management"></textarea>
+                <label>Mode de visibilité *</label>
+                    <select id="courseVisibilityMode" required>
+                        <option value="assigned_only">Affectation uniquement (assigné par le formateur)</option>
+                        <option value="auto_enrollment_with_validation">Auto-inscription avec validation</option>
+                        <option value="unlock_by_progression">Déblocage par progression (montée en compétence)</option>
+                        <option value="mandatory">Obligatoire avec date limite</option>
+                        </select>
 
+                <label>Date de disponibilité (optionnel)</label>
+                    <input type="date" id="courseAvailabilityDate">
                 <hr style="margin: 20px 0;">
                 <h4>Contenu du cours</h4>
                 <p class="scale-info">Ajoutez des sections, vidéos et quiz ci-dessous.</p>
@@ -183,9 +192,12 @@
                 </div>
 
                 <div class="modal-actions">
-                    <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
-                    <button type="submit" class="btn">Enregistrer</button>
-                </div>
+    <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
+    <button type="button" class="btn btn-secondary" id="btnSaveDraft">💾 Enregistrer</button>
+    <button type="button" class="btn btn-secondary" id="btnSaveAndQuit">💾 Enregistrer et quitter</button>
+    <button type="button" class="btn" id="btnPublish">🚀 Publier</button>
+    <button type="button" class="btn" id="btnPublishAndAssign">🚀 Publier et affecter</button>
+</div>
             </form>
         </div>
     </div>
