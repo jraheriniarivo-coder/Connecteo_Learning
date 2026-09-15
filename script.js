@@ -63,6 +63,14 @@ const btnSaveAndQuit = document.getElementById('btnSaveAndQuit');
 const btnPublish = document.getElementById('btnPublish');
 const btnPublishAndAssign = document.getElementById('btnPublishAndAssign');
 
+// Références pour l'onglet Résultats
+const filterCourseSelect = document.getElementById('filterCourse');
+const btnExportCSV = document.getElementById('btnExportCSV');
+const resultsTableBody = document.getElementById('resultsTableBody');
+const resultsTotalCount = document.getElementById('resultsTotalCount');
+const resultsCompletedCount = document.getElementById('resultsCompletedCount');
+const resultsUniqueUsers = document.getElementById('resultsUniqueUsers');
+
 let modules = [];
 let currentTheme = 'Management';
 let selectedCourseId = null;
@@ -532,13 +540,7 @@ async function saveCourse(action) {
     const syllabus = courseSyllabusInput.value.split('\n').map(l => l.trim()).filter(l => l !== '');
     const visibilityMode = courseVisibilityModeInput.value;
     const availabilityDate = courseAvailabilityDateInput.value || null;
-    const filterCourseSelect = document.getElementById('filterCourse');
-    const btnExportCSV = document.getElementById('btnExportCSV');
-    const resultsTableBody = document.getElementById('resultsTableBody');
-    const resultsTotalCount = document.getElementById('resultsTotalCount');
-    const resultsCompletedCount = document.getElementById('resultsCompletedCount');
-    const resultsUniqueUsers = document.getElementById('resultsUniqueUsers');
-
+    
     if (!title || !description || !duree) {
         alert('Veuillez remplir tous les champs obligatoires.');
         return;
