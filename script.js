@@ -532,6 +532,12 @@ async function saveCourse(action) {
     const syllabus = courseSyllabusInput.value.split('\n').map(l => l.trim()).filter(l => l !== '');
     const visibilityMode = courseVisibilityModeInput.value;
     const availabilityDate = courseAvailabilityDateInput.value || null;
+    const filterCourseSelect = document.getElementById('filterCourse');
+    const btnExportCSV = document.getElementById('btnExportCSV');
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    const resultsTotalCount = document.getElementById('resultsTotalCount');
+    const resultsCompletedCount = document.getElementById('resultsCompletedCount');
+    const resultsUniqueUsers = document.getElementById('resultsUniqueUsers');
 
     if (!title || !description || !duree) {
         alert('Veuillez remplir tous les champs obligatoires.');
@@ -940,9 +946,11 @@ function setupAdminTabs() {
             if (targetEl) targetEl.classList.add('active');
 
             if (target === 'cours') {
-                renderAdminCourses();
-            } else if (target === 'global') {
+                 renderAdminCourses();
+                } else if (target === 'global') {
                 renderGlobalDashboard();
+                } else if (target === 'resultats') {
+                loadResults();
             }
         });
     });
@@ -1114,7 +1122,103 @@ function renderDashboard() {
         });
     }
 }
+// ============================================
+// ADMIN : RÉSULTATS
+// ============================================
+async function loadResults() {
+    if (!isAdminPage) return;
 
+    // Charger toutes les lignes de progress
+    const { data: progressData, error } = await supabaseClient
+        .from('progress')
+        .select('*')
+        .order('completed_at', { ascending: false });
+
+    if (error) {
+        console.error('Erreur chargement résultats:', error);
+        if (resultsTableBody) {
+            resultsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--error);">Erreur de chargement.</td></tr>';
+        }
+        return;
+    }
+
+    const rows = progressData || [];
+
+    // Remplir le filtre par cours
+    if (filterCourseSelect) {
+        const currentFilter = filterCourseSelect.value;
+        filterCourseSelect.innerHTML = '<option value="">Tous les cours</option>';
+        courses.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c.id;
+            option.textContent = c.title;
+            if (String(c.id) === String(currentFilter)) option.selected = true;
+            filterCourseSelect.appendChild(option);
+        });
+    }
+
+    // Filtrage
+    const selectedCourseId = filterCourseSelect ? filterCourseSelect.value : '';
+    const filtered = selectedCourseId
+        ? rows.filter(r => String(r.course_id) === String(selectedCourseId))
+        : rows;
+
+    // Mise à jour des compteurs
+    const completedCount = filtered.filter(r => r.completed === true).length;
+    const uniqueUsers = new Set(filtered.map(r => r.user_id)).size;
+
+    if (resultsTotalCount) resultsTotalCount.textContent = filtered.length;
+    if (resultsCompletedCount) resultsCompletedCount.textContent = completedCount;
+    if (resultsUniqueUsers) resultsUniqueUsers.textContent = uniqueUsers;
+
+    // Remplissage du tableau
+    if (!resultsTableBody) return;
+    resultsTableBody.innerHTML = '';
+
+    if (filtered.length === 0) {
+        resultsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucun résultat pour le moment.</td></tr>';
+        return;
+    }
+
+    filtered.forEach(r => {
+        const course = courses.find(c => c.id === r.course_id);
+        const courseTitle = course ? course.title : `Cours #${r.course_id}`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${r.user_id}</td>
+            <td>${courseTitle}</td>
+            <td><span class="status-badge ${r.completed ? 'completed' : 'inprogress'}">${r.completed ? 'Terminé' : 'En cours'}</span></td>
+            <td>${r.score != null ? r.score + '%' : '—'}</td>
+            <td>${r.completed_at ? new Date(r.completed_at).toLocaleString('fr-FR') : '—'}</td>
+            <td>${r.completed ? 'Auto' : '—'}</td>
+        `;
+        resultsTableBody.appendChild(tr);
+    });
+}
+function exportResultsToCSV() {
+    const rows = [];
+    rows.push(['Apprenant', 'Cours', 'Statut', 'Score', 'Date de complétion']);
+
+    const tbody = resultsTableBody;
+    if (!tbody) return;
+
+    tbody.querySelectorAll('tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length >= 5) {
+            rows.push(Array.from(cells).slice(0, 5).map(c => '"' + c.textContent.trim().replace(/"/g, '""') + '"'));
+        }
+    });
+
+    const csvContent = rows.map(r => r.join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'resultats_formations_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+}
 // ============================================
 // INITIALISATION
 // ============================================
@@ -1124,6 +1228,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isAdminPage) {
         // Empêcher la soumission par défaut (touche Entrée)
         courseForm?.addEventListener('submit', (e) => e.preventDefault());
+        filterCourseSelect?.addEventListener('change', loadResults);
+        btnExportCSV?.addEventListener('click', exportResultsToCSV);
 
         // Boutons d'action du formulaire de cours
         document.getElementById('btnSaveDraft')?.addEventListener('click', () => saveCourse('save'));

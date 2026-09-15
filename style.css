@@ -1506,3 +1506,57 @@ body {
     color: #fff !important;
     border-color: var(--primary) !important;
 }
+/* ==================== ONGLET RÉSULTATS ==================== */
+.results-filters {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.results-filters label {
+    font-weight: 600;
+    color: var(--gray-dark);
+}
+
+.results-filters select {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Mada', sans-serif;
+    font-size: 0.95rem;
+    min-width: 250px;
+}
+
+.results-summary {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.results-summary .stat-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 15px 25px;
+    border-left: 4px solid var(--primary);
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.status-badge.completed {
+    background: #27ae60;
+    color: #fff;
+}
+.status-badge.inprogress {
+    background: #ffa900;
+    color: #fff;
+}

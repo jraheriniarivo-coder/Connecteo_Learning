@@ -60,9 +60,10 @@
                 <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
 
                 <div class="admin-tabs">
-             <button class="tab-btn active" data-tab="global">Global</button>
-             <button class="tab-btn" data-tab="cours">Gestion des cours</button>
-             <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
+                    <button class="tab-btn active" data-tab="global">Global</button>
+                    <button class="tab-btn" data-tab="cours">Gestion des cours</button>
+                    <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
+                    <button class="tab-btn" data-tab="resultats">Résultats</button>
                 </div>
 
                 <!-- Onglet Global (premier, actif par défaut) -->
@@ -115,6 +116,40 @@
                         <p>Liste des utilisateurs importés (stockée localement) :</p>
                     <ul id="importedUsersList" style="list-style: none; padding: 0;"></ul>
                 </div>  
+         <!-- Onglet Résultats -->
+<div id="tab-resultats" class="tab-content">
+    <h3>Résultats des formations</h3>
+
+    <div class="results-filters">
+        <label for="filterCourse">Filtrer par cours :</label>
+        <select id="filterCourse">
+            <option value="">Tous les cours</option>
+        </select>
+        <button class="btn" id="btnExportCSV" style="margin-left:auto;">📥 Exporter en CSV</button>
+    </div>
+
+    <div class="results-summary">
+        <div class="stat-card">Total lignes : <span id="resultsTotalCount">0</span></div>
+        <div class="stat-card">Cours terminés : <span id="resultsCompletedCount">0</span></div>
+        <div class="stat-card">Apprenants uniques : <span id="resultsUniqueUsers">0</span></div>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Apprenant</th>
+                <th>Cours</th>
+                <th>Statut</th>
+                <th>Score</th>
+                <th>Date de complétion</th>
+                <th>Affecté</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>       
             </section>
         </main>
 
