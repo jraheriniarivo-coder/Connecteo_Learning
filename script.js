@@ -70,6 +70,7 @@ const resultsTableBody = document.getElementById('resultsTableBody');
 const resultsTotalCount = document.getElementById('resultsTotalCount');
 const resultsCompletedCount = document.getElementById('resultsCompletedCount');
 const resultsUniqueUsers = document.getElementById('resultsUniqueUsers');
+const visibilitySummaryBody = document.getElementById('visibilitySummaryBody');
 
 let modules = [];
 let currentTheme = 'Management';
@@ -1065,6 +1066,8 @@ function renderGlobalDashboard() {
             }
         });
     }
+    // Charger le récapitulatif par type
+loadVisibilitySummary();
 }
 
 // ============================================
@@ -1220,6 +1223,91 @@ function exportResultsToCSV() {
     link.download = 'resultats_formations_' + new Date().toISOString().slice(0,10) + '.csv';
     link.click();
     URL.revokeObjectURL(url);
+}
+// ============================================
+// RÉCAPITULATIF PAR TYPE DE VISIBILITÉ
+// ============================================
+async function loadVisibilitySummary() {
+    if (!isAdminPage || !visibilitySummaryBody) return;
+
+    // Récupérer toutes les données utiles
+    const [progressRes, enrollmentsRes] = await Promise.all([
+        supabaseClient.from('progress').select('*'),
+        supabaseClient.from('enrollments').select('*')
+    ]);
+
+    const progressData = progressRes.data || [];
+    const enrollmentsData = enrollmentsRes.data || [];
+
+    // Libellés lisibles pour chaque type
+    const typeLabels = {
+        'assigned_only': 'Affectation uniquement',
+        'auto_enrollment_with_validation': 'Auto-inscription validée',
+        'unlock_by_progression': 'Déblocage par progression',
+        'mandatory': 'Obligatoire avec échéance'
+    };
+
+    // Initialisation des compteurs
+    const stats = {};
+    Object.keys(typeLabels).forEach(type => {
+        stats[type] = { courses: 0, targeted: 0, completed: 0 };
+    });
+
+    // Comptage par type
+    courses.forEach(course => {
+        const type = course.visibility_mode || 'assigned_only';
+        if (!stats[type]) stats[type] = { courses: 0, targeted: 0, completed: 0 };
+        stats[type].courses += 1;
+
+        // Ciblés : nombre d'enrollments pour ce cours (en attendant les vrais)
+        const targeted = enrollmentsData.filter(e => e.course_id === course.id).length;
+        stats[type].targeted += targeted;
+
+        // Terminés : lignes de progress avec completed=true
+        const completed = progressData.filter(p => p.course_id === course.id && p.completed === true).length;
+        stats[type].completed += completed;
+    });
+
+    // Remplissage du tableau
+    visibilitySummaryBody.innerHTML = '';
+
+    let hasRows = false;
+
+    Object.keys(typeLabels).forEach(type => {
+        const s = stats[type];
+        // N'afficher que les types qui ont au moins un cours
+        if (s.courses === 0) return;
+        hasRows = true;
+
+        // Calcul du taux
+        let rateText = '—';
+        let rateClass = '';
+        if (s.targeted > 0) {
+            const rate = Math.round((s.completed / s.targeted) * 100);
+            rateText = rate + '%';
+            if (rate >= 75) rateClass = 'rate-good';
+            else if (rate >= 40) rateClass = 'rate-medium';
+            else rateClass = 'rate-low';
+        } else if (s.completed > 0) {
+            // Pas d'affectation, mais des gens ont terminé
+            rateText = '100% (auto)';
+            rateClass = 'rate-good';
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${typeLabels[type]}</td>
+            <td>${s.courses}</td>
+            <td>${s.targeted > 0 ? s.targeted : '—'}</td>
+            <td>${s.completed}</td>
+            <td class="${rateClass}">${rateText}</td>
+        `;
+        visibilitySummaryBody.appendChild(tr);
+    });
+
+    if (!hasRows) {
+        visibilitySummaryBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);">Aucun cours pour le moment.</td></tr>';
+    }
 }
 // ============================================
 // INITIALISATION

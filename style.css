@@ -1560,3 +1560,26 @@ body {
     background: #ffa900;
     color: #fff;
 }
+/* ==================== RÉCAPITULATIF PAR TYPE ==================== */
+#visibilitySummaryTable {
+    margin-top: 15px;
+}
+
+#visibilitySummaryTable td {
+    font-size: 0.95rem;
+}
+
+.rate-good {
+    color: #27ae60;
+    font-weight: 700;
+}
+
+.rate-medium {
+    color: #ffa900;
+    font-weight: 700;
+}
+
+.rate-low {
+    color: #e74c3c;
+    font-weight: 700;
+}
