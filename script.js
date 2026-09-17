@@ -424,7 +424,11 @@ function renderAdminCourses() {
 
         tr.innerHTML = `
             <td>${course.theme}</td>
-            <td>${course.title}</td>
+            <td>
+                ${course.title}
+                ${course.status === 'draft' ? '<span class="badge-draft">Brouillon</span>' : ''}
+                ${course.status === 'editing' ? '<span class="badge-editing">En édition</span>' : ''}
+            </td>
             <td>${course.niveau}</td>
             <td>${course.duree}</td>
             <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
@@ -434,11 +438,6 @@ function renderAdminCourses() {
                 <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
                 <button class="admin-btn delete" data-id="${course.id}">Supprimer</button>
             </td>
-            <td>
-                ${course.title}
-                ${course.status === 'draft' ? '<span class="badge-draft">Brouillon</span>' : ''}
-                ${course.status === 'editing' ? '<span class="badge-editing">En édition</span>' : ''}
-        </td>
         `;
         tbody.appendChild(tr);
     });
