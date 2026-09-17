@@ -1604,3 +1604,48 @@ body {
     color: #7a4a15;
     border-left: 4px solid #ffa900;
 }
+/* ==================== FILTRES PROFILS ==================== */
+.profiles-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.filter-input,
+.filter-select {
+    padding: 10px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: 'Mada', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.3s;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 220px;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.filter-select {
+    min-width: 160px;
+    cursor: pointer;
+}
+
+.filter-count {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 0.9rem;
+}

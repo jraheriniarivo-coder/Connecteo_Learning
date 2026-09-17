@@ -129,6 +129,23 @@
         <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
     </div>
     <p id="importStatus" class="import-status" style="display:none;"></p>
+
+    <!-- Filtres -->
+    <div class="profiles-filters">
+        <input type="text" id="profileSearch" placeholder="🔍 Rechercher un nom, un matricule..." class="filter-input">
+        <select id="profileBuFilter" class="filter-select">
+            <option value="">Toutes les BU</option>
+        </select>
+        <select id="profileRoleFilter" class="filter-select">
+            <option value="">Tous les rôles</option>
+            <option value="admin">Admin</option>
+            <option value="formateur">Formateur</option>
+            <option value="apprenant">Apprenant</option>
+        </select>
+        <button class="btn btn-secondary" id="btnResetProfileFilters">Réinitialiser</button>
+        <span class="filter-count" id="profileCount"></span>
+    </div>
+
     <p class="section-desc">Liste des utilisateurs enregistrés dans la base :</p>
     <table class="admin-table">
         <thead>

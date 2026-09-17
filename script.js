@@ -1085,12 +1085,16 @@ function renderImportedUsers() {
     });
 }
 // ============================================
-// ADMIN : LISTE DES PROFILS
+// ADMIN : LISTE DES PROFILS (avec filtres)
 // ============================================
+let allProfiles = []; // cache des profils chargés
+
 async function loadProfiles() {
     if (!isAdminPage) return;
     const tbody = document.getElementById('profilesTableBody');
     if (!tbody) return;
+
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>';
 
     const { data, error } = await supabaseClient
         .from('profiles')
@@ -1103,24 +1107,81 @@ async function loadProfiles() {
         return;
     }
 
+    allProfiles = data || [];
+
+    // Remplir le filtre BU avec les valeurs uniques
+    populateBuFilter();
+
+    // Afficher tous les profils au départ
+    renderFilteredProfiles();
+}
+
+function populateBuFilter() {
+    const buSelect = document.getElementById('profileBuFilter');
+    if (!buSelect) return;
+
+    const currentValue = buSelect.value;
+    const bus = [...new Set(allProfiles.map(p => p.bu).filter(b => b))].sort();
+
+    buSelect.innerHTML = '<option value="">Toutes les BU</option>';
+    bus.forEach(bu => {
+        const opt = document.createElement('option');
+        opt.value = bu;
+        opt.textContent = bu;
+        if (bu === currentValue) opt.selected = true;
+        buSelect.appendChild(opt);
+    });
+}
+
+function renderFilteredProfiles() {
+    const tbody = document.getElementById('profilesTableBody');
+    const searchInput = document.getElementById('profileSearch');
+    const buFilter = document.getElementById('profileBuFilter');
+    const roleFilter = document.getElementById('profileRoleFilter');
+    const countEl = document.getElementById('profileCount');
+    if (!tbody) return;
+
+    const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    const buValue = buFilter ? buFilter.value : '';
+    const roleValue = roleFilter ? roleFilter.value : '';
+
+    const filtered = allProfiles.filter(p => {
+        // Recherche texte (nom, username, matricule)
+        const matchText = !searchTerm ||
+            (p.full_name || '').toLowerCase().includes(searchTerm) ||
+            (p.username || '').toLowerCase().includes(searchTerm) ||
+            (p.matricule || '').toLowerCase().includes(searchTerm);
+
+        // Filtre BU
+        const matchBu = !buValue || p.bu === buValue;
+
+        // Filtre rôle
+        const matchRole = !roleValue || (p.role || '').toLowerCase() === roleValue;
+
+        return matchText && matchBu && matchRole;
+    });
+
     tbody.innerHTML = '';
-    if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucun utilisateur enregistré.</td></tr>';
-        return;
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucun utilisateur ne correspond aux filtres.</td></tr>';
+    } else {
+        filtered.forEach(profile => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${profile.full_name || ''}</td>
+                <td>${profile.username || ''}</td>
+                <td>${profile.matricule || ''}</td>
+                <td>${profile.bu || ''}</td>
+                <td>${profile.fonction || ''}</td>
+                <td>${profile.role || ''}</td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    data.forEach(profile => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${profile.full_name || ''}</td>
-            <td>${profile.username || ''}</td>
-            <td>${profile.matricule || ''}</td>
-            <td>${profile.bu || ''}</td>
-            <td>${profile.fonction || ''}</td>
-            <td>${profile.role || ''}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+    if (countEl) {
+        countEl.textContent = `${filtered.length} / ${allProfiles.length} utilisateur(s)`;
+    }
 }
 
 function renderGlobalDashboard() {
@@ -1439,6 +1500,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         courseForm?.addEventListener('submit', (e) => e.preventDefault());
         filterCourseSelect?.addEventListener('change', loadResults);
         btnExportCSV?.addEventListener('click', exportResultsToCSV);
+
+        // 👇 AJOUTER ICI les filtres des profils 👇
+        document.getElementById('profileSearch')?.addEventListener('input', renderFilteredProfiles);
+        document.getElementById('profileBuFilter')?.addEventListener('change', renderFilteredProfiles);
+        document.getElementById('profileRoleFilter')?.addEventListener('change', renderFilteredProfiles);
+        document.getElementById('btnResetProfileFilters')?.addEventListener('click', () => {
+            const search = document.getElementById('profileSearch');
+            const bu = document.getElementById('profileBuFilter');
+            const role = document.getElementById('profileRoleFilter');
+            if (search) search.value = '';
+            if (bu) bu.value = '';
+            if (role) role.value = '';
+            renderFilteredProfiles();
+        });
+        // 👆 FIN DE L'AJOUT 👆
 
         // Boutons d'action du formulaire de cours
         document.getElementById('btnSaveDraft')?.addEventListener('click', () => saveCourse('save'));
