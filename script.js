@@ -949,12 +949,14 @@ function setupAdminTabs() {
             if (targetEl) targetEl.classList.add('active');
 
             if (target === 'cours') {
-                 renderAdminCourses();
-                } else if (target === 'global') {
-                renderGlobalDashboard();
-                } else if (target === 'resultats') {
-                loadResults();
-            }
+    renderAdminCourses();
+            } else if (target === 'global') {
+    renderGlobalDashboard();
+            } else if (target === 'resultats') {
+    loadResults();
+            } else if (target === 'utilisateurs') {
+    loadProfiles();
+}
         });
     });
 }
@@ -1081,6 +1083,44 @@ function renderImportedUsers() {
         const li = document.createElement('li');
         li.textContent = `${user.nom || ''} ${user.prenom || ''} - ${user.fonction || ''} - ${user.bu || ''}`;
         importedUsersList.appendChild(li);
+    });
+}
+// ============================================
+// ADMIN : LISTE DES PROFILS
+// ============================================
+async function loadProfiles() {
+    if (!isAdminPage) return;
+    const tbody = document.getElementById('profilesTableBody');
+    if (!tbody) return;
+
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .order('full_name', { ascending: true });
+
+    if (error) {
+        console.error('Erreur chargement profils:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--error);">Erreur de chargement.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucun utilisateur enregistré.</td></tr>';
+        return;
+    }
+
+    data.forEach(profile => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${profile.full_name || ''}</td>
+            <td>${profile.username || ''}</td>
+            <td>${profile.matricule || ''}</td>
+            <td>${profile.bu || ''}</td>
+            <td>${profile.fonction || ''}</td>
+            <td>${profile.role || ''}</td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 
