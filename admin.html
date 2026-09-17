@@ -124,13 +124,28 @@
 
             <!-- Onglet Gestion des utilisateurs -->
         <div id="tab-utilisateurs" class="tab-content">
-        <div class="admin-actions">
+    <div class="admin-actions">
         <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
         <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
-        </div>
-                        <p>Liste des utilisateurs importés (stockée localement) :</p>
-                    <ul id="importedUsersList" style="list-style: none; padding: 0;"></ul>
-                </div>  
+    </div>
+    <p id="importStatus" class="import-status" style="display:none;"></p>
+    <p class="section-desc">Liste des utilisateurs enregistrés dans la base :</p>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Identifiant</th>
+                <th>Matricule</th>
+                <th>BU</th>
+                <th>Fonction</th>
+                <th>Rôle</th>
+            </tr>
+        </thead>
+        <tbody id="profilesTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>
          <!-- Onglet Résultats -->
 <div id="tab-resultats" class="tab-content">
     <h3>Résultats des formations</h3>

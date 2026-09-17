@@ -967,30 +967,110 @@ if (btnImportUsers && importUsersFile) {
     });
 }
 
+// ============================================
+// IMPORT CSV DES UTILISATEURS → SUPABASE
+// ============================================
 if (importUsersFile) {
-    importUsersFile.addEventListener('change', (e) => {
+    importUsersFile.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        const statusEl = document.getElementById('importStatus');
+        if (statusEl) {
+            statusEl.className = 'import-status loading';
+            statusEl.textContent = '⏳ Lecture du fichier...';
+            statusEl.style.display = 'block';
+        }
+
         const reader = new FileReader();
-        reader.onload = (event) => {
-            const csv = event.target.result;
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
-            importedUsers = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const values = lines[i].split(',').map(v => v.trim());
-                const user = {};
-                headers.forEach((h, idx) => {
-                    user[h.toLowerCase()] = values[idx] || '';
-                });
-                importedUsers.push(user);
+
+        reader.onload = async (event) => {
+            try {
+                const text = event.target.result;
+
+                // Détection automatique du séparateur (; ou ,)
+                const firstLine = text.split('\n')[0];
+                const separator = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+
+                const lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+                if (lines.length < 2) {
+                    throw new Error('Fichier vide ou invalide.');
+                }
+
+                // En-têtes
+                const headers = lines[0].split(separator).map(h => h.trim().toLowerCase().replace(/^\ufeff/, ''));
+                // Le \ufeff est le BOM UTF-8 qui peut se retrouver en début de fichier
+
+                const requiredColumns = ['username', 'full_name', 'matricule', 'bu', 'fonction', 'role'];
+                const missing = requiredColumns.filter(c => !headers.includes(c));
+                if (missing.length > 0) {
+                    throw new Error(`Colonnes manquantes : ${missing.join(', ')}`);
+                }
+
+                // Préparation des données
+                const rows = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(separator).map(v => v.trim());
+                    const row = {};
+                    headers.forEach((h, idx) => {
+                        row[h] = values[idx] || '';
+                    });
+
+                    // Normalisation
+                    row.role = (row.role || 'apprenant').toLowerCase();
+                    row.username = (row.username || '').trim();
+                    row.full_name = (row.full_name || '').trim();
+
+                    if (!row.username) continue; // ignorer les lignes sans username
+
+                    rows.push(row);
+                }
+
+                if (rows.length === 0) {
+                    throw new Error('Aucun utilisateur valide dans le fichier.');
+                }
+
+                if (statusEl) {
+                    statusEl.className = 'import-status loading';
+                    statusEl.textContent = `⏳ Envoi de ${rows.length} utilisateurs vers Supabase...`;
+                }
+
+                // Upsert dans Supabase
+                // onConflict: 'username' → met à jour si l'username existe déjà
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .upsert(rows, { onConflict: 'username' });
+
+                if (error) throw error;
+
+                if (statusEl) {
+                    statusEl.className = 'import-status success';
+                    statusEl.textContent = `✅ ${rows.length} utilisateur(s) importé(s) ou mis à jour avec succès.`;
+                }
+
+                // Recharger la liste
+                await loadProfiles();
+
+            } catch (err) {
+                console.error('Erreur import CSV:', err);
+                if (statusEl) {
+                    statusEl.className = 'import-status error';
+                    statusEl.textContent = '❌ Erreur : ' + err.message;
+                }
+            } finally {
+                // Réinitialiser l'input pour permettre le ré-import du même fichier
+                importUsersFile.value = '';
             }
-            renderImportedUsers();
-            alert(`${importedUsers.length} utilisateurs importés (simulation)`);
         };
-        reader.readAsText(file);
+
+        reader.onerror = () => {
+            if (statusEl) {
+                statusEl.className = 'import-status error';
+                statusEl.textContent = '❌ Impossible de lire le fichier.';
+            }
+        };
+
+        reader.readAsText(file, 'UTF-8');
     });
 }
 
