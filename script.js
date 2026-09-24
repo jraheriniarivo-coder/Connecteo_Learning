@@ -1146,24 +1146,18 @@ function renderFilteredProfiles() {
     const roleValue = roleFilter ? roleFilter.value : '';
 
     const filtered = allProfiles.filter(p => {
-        // Recherche texte (nom, username, matricule)
         const matchText = !searchTerm ||
             (p.full_name || '').toLowerCase().includes(searchTerm) ||
             (p.username || '').toLowerCase().includes(searchTerm) ||
             (p.matricule || '').toLowerCase().includes(searchTerm);
-
-        // Filtre BU
         const matchBu = !buValue || p.bu === buValue;
-
-        // Filtre rôle
         const matchRole = !roleValue || (p.role || '').toLowerCase() === roleValue;
-
         return matchText && matchBu && matchRole;
     });
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Aucun utilisateur ne correspond aux filtres.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray);">Aucun utilisateur ne correspond aux filtres.</td></tr>';
     } else {
         filtered.forEach(profile => {
             const tr = document.createElement('tr');
@@ -1174,8 +1168,16 @@ function renderFilteredProfiles() {
                 <td>${profile.bu || ''}</td>
                 <td>${profile.fonction || ''}</td>
                 <td>${profile.role || ''}</td>
+                <td>
+                    <button class="btn-delete-row" data-id="${profile.id}" data-name="${profile.full_name || profile.username}">🗑️</button>
+                </td>
             `;
             tbody.appendChild(tr);
+        });
+
+        // Câbler les boutons de suppression
+        tbody.querySelectorAll('.btn-delete-row').forEach(btn => {
+            btn.addEventListener('click', () => deleteProfile(btn.dataset.id, btn.dataset.name));
         });
     }
 
@@ -1183,7 +1185,76 @@ function renderFilteredProfiles() {
         countEl.textContent = `${filtered.length} / ${allProfiles.length} utilisateur(s)`;
     }
 }
+// ============================================
+// SUPPRESSION D'UN UTILISATEUR
+// ============================================
+async function deleteProfile(id, name) {
+    if (!confirm(`Supprimer définitivement l'utilisateur "${name}" ?\n\nAttention : ses affectations et sa progression seront également supprimées.`)) {
+        return;
+    }
 
+    // Supprimer les dépendances (progress, enrollments)
+    await supabaseClient.from('progress').delete().eq('user_id', id);
+    await supabaseClient.from('enrollments').delete().eq('user_id', id);
+
+    // Supprimer le profil
+    const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
+
+    if (error) {
+        alert('Erreur suppression : ' + error.message);
+        return;
+    }
+
+    // Rafraîchir
+    await loadProfiles();
+}
+
+// ============================================
+// SUPPRESSION DE TOUS LES UTILISATEURS
+// ============================================
+async function deleteAllProfiles() {
+    const count = allProfiles.length;
+    if (count === 0) {
+        alert('Aucun utilisateur à supprimer.');
+        return;
+    }
+
+    const confirmation = prompt(
+        `⚠️ ATTENTION ⚠️\n\nVous êtes sur le point de supprimer DÉFINITIVEMENT les ${count} utilisateurs.\n\nCela supprimera aussi leurs affectations et leur progression.\n\nTapez "SUPPRIMER" pour confirmer.`
+    );
+
+    if (confirmation !== 'SUPPRIMER') {
+        alert('Suppression annulée.');
+        return;
+    }
+
+    const statusEl = document.getElementById('importStatus');
+    if (statusEl) {
+        statusEl.className = 'import-status loading';
+        statusEl.textContent = '⏳ Suppression en cours...';
+        statusEl.style.display = 'block';
+    }
+
+    // Supprimer toutes les dépendances puis les profils
+    await supabaseClient.from('progress').delete().neq('id', 0);
+    await supabaseClient.from('enrollments').delete().neq('id', 0);
+    const { error } = await supabaseClient.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (error) {
+        if (statusEl) {
+            statusEl.className = 'import-status error';
+            statusEl.textContent = '❌ Erreur : ' + error.message;
+        }
+        return;
+    }
+
+    if (statusEl) {
+        statusEl.className = 'import-status success';
+        statusEl.textContent = `✅ ${count} utilisateur(s) supprimé(s) avec succès.`;
+    }
+
+    await loadProfiles();
+}
 function renderGlobalDashboard() {
     if (!isAdminPage) return;
     const totalCoursEl = document.getElementById('globalTotalCours');
@@ -1500,6 +1571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         courseForm?.addEventListener('submit', (e) => e.preventDefault());
         filterCourseSelect?.addEventListener('change', loadResults);
         btnExportCSV?.addEventListener('click', exportResultsToCSV);
+        document.getElementById('btnDeleteAllUsers')?.addEventListener('click', deleteAllProfiles);
 
         // 👇 AJOUTER ICI les filtres des profils 👇
         document.getElementById('profileSearch')?.addEventListener('input', renderFilteredProfiles);

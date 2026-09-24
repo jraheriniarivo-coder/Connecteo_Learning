@@ -123,10 +123,11 @@
 </div>
 
             <!-- Onglet Gestion des utilisateurs -->
-        <div id="tab-utilisateurs" class="tab-content">
+      <div id="tab-utilisateurs" class="tab-content">
     <div class="admin-actions">
         <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
         <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
+        <button class="btn" id="btnDeleteAllUsers" style="background:#e74c3c; margin-left:10px;">🗑️ Supprimer tous les utilisateurs</button>
     </div>
     <p id="importStatus" class="import-status" style="display:none;"></p>
 
@@ -156,10 +157,11 @@
                 <th>BU</th>
                 <th>Fonction</th>
                 <th>Rôle</th>
+                <th style="width:80px;">Action</th>
             </tr>
         </thead>
         <tbody id="profilesTableBody">
-            <tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+            <tr><td colspan="7" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
         </tbody>
     </table>
 </div>

@@ -1649,3 +1649,26 @@ body {
     color: var(--primary-dark);
     font-size: 0.9rem;
 }
+/* Bouton supprimer ligne */
+.btn-delete-row {
+    background: #fbe9e7;
+    color: #c0392b;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: 'Mada', sans-serif;
+    transition: all 0.2s;
+}
+
+.btn-delete-row:hover {
+    background: #c0392b;
+    color: #fff;
+}
+
+.btn-delete-row:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
