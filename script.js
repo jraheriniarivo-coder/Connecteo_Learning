@@ -1736,18 +1736,68 @@ document.addEventListener('DOMContentLoaded', async () => {
 function requestEnrollment(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
-    
-    const raison = prompt(
-        `Demande d'inscription au cours :\n"${course.title}"\n\nMerci d'indiquer la raison de votre demande :`
-    );
-    
-    if (raison === null) return; // annulé
-    
-    if (!raison.trim()) {
-        alert('Veuillez indiquer une raison.');
+
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    if (!sessionUser) {
+        alert('Vous devez être connecté pour faire une demande.');
         return;
     }
-    
-    alert('✅ Votre demande a bien été envoyée à l\'administrateur.\n\nVous serez notifié(e) une fois validée.');
+
+    // Récupérer les infos du profil si disponibles
+    const userProfile = allProfiles.find(p => p.username === sessionUser.username) || {};
+
+    const modalHtml = `
+        <div class="modal-overlay" id="requestEnrollmentModal">
+            <div class="modal-box" style="max-width: 600px;">
+                <h3>📩 Demande d'inscription</h3>
+                <p style="font-size:0.9rem;color:var(--gray);margin-bottom:20px;">Votre demande sera transmise à l'administrateur pour validation.</p>
+
+                <div style="background:var(--gray-light);border-radius:8px;padding:15px;margin-bottom:20px;">
+                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📋 Informations du demandeur</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">
+                        <div><b>Nom :</b> ${sessionUser.name || '—'}</div>
+                        <div><b>Identifiant :</b> ${sessionUser.username || '—'}</div>
+                        <div><b>Matricule :</b> ${userProfile.matricule || '—'}</div>
+                        <div><b>BU :</b> ${userProfile.bu || '—'}</div>
+                        <div><b>Fonction :</b> ${userProfile.fonction || '—'}</div>
+                    </div>
+                </div>
+
+                <div style="background:var(--primary-light);border-radius:8px;padding:15px;margin-bottom:20px;">
+                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📚 Formation demandée</div>
+                    <div style="font-size:0.9rem;">
+                        <div><b>Titre :</b> ${course.title}</div>
+                        <div><b>Durée :</b> ${course.duree}</div>
+                        <div><b>Thématique :</b> ${course.theme}</div>
+                    </div>
+                </div>
+
+                <label style="display:block;font-weight:700;color:var(--gray-dark);margin-bottom:8px;">Raison de la demande <span style="color:#e74c3c;">*</span></label>
+                <textarea id="enrollmentReason" rows="4" placeholder="Expliquez brièvement pourquoi vous souhaitez suivre cette formation..." style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Mada',sans-serif;font-size:0.95rem;margin-bottom:15px;"></textarea>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('requestEnrollmentModal')">Annuler</button>
+                    <button class="btn" onclick="submitEnrollmentRequest(${courseId})">📨 Envoyer la demande</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function submitEnrollmentRequest(courseId) {
+    const reason = document.getElementById('enrollmentReason').value.trim();
+    if (!reason) {
+        alert('Veuillez indiquer une raison pour votre demande.');
+        return;
+    }
+
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    const course = courses.find(c => c.id === courseId);
+
+    // Simulation : affichage d'un message de confirmation
+    closeModal('requestEnrollmentModal');
+    alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
 }
 });
