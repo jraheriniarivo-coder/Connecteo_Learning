@@ -417,18 +417,49 @@ function renderCourseDetail(course, container, titleEl) {
                     ${(course.syllabus || []).map(point => `<li>${point}</li>`).join('')}
                 </ul>
                 ${(() => {
-    const isMandatory = course.visibility_mode === 'mandatory';
+    const mode = course.visibility_mode || 'assigned_only';
     const isAssigned = window.userEnrollments && window.userEnrollments.includes(course.id);
-    const isAutoEnroll = course.visibility_mode === 'auto_enrollment_with_validation';
     
-    if (isMandatory || isAssigned || course.auto_inscription || course.autoInscription) {
+    // Priorité 1 : déblocage par progression
+    if (mode === 'unlock_by_progression') {
+        const prereq = courses.find(c => c.id === course.prerequisite_course_id);
+        const prereqTitle = prereq ? prereq.title : 'un cours préalable';
+        // Vérifier si le prérequis est terminé
+        const prereqDone = prereq && prereq.progress === 100;
+        if (prereqDone) {
+            return course.externalUrl 
+                ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
+                : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        }
+        return `<button class="btn btn-disabled" disabled>🔒 À débloquer après : ${prereqTitle}</button>`;
+    }
+    
+    // Priorité 2 : auto-inscription avec validation
+    if (mode === 'auto_enrollment_with_validation') {
+        // Si l'utilisateur est déjà inscrit/affecté, il peut commencer
+        if (isAssigned) {
+            return course.externalUrl 
+                ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
+                : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        }
+        return `<button class="btn" onclick="requestEnrollment(${course.id})">📩 Demander l'inscription</button>`;
+    }
+    
+    // Priorité 3 : obligatoire ou affecté
+    if (mode === 'mandatory' || isAssigned) {
         return course.externalUrl 
             ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
             : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
     }
-    if (isAutoEnroll) {
-        return `<button class="btn" onclick="requestEnrollment(${course.id})">📩 Demander l'inscription</button>`;
+    
+    // Priorité 4 : affectation uniquement (assigned_only)
+    if (mode === 'assigned_only') {
+        return isAssigned
+            ? `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`
+            : `<button class="btn btn-disabled" disabled>Réservé aux personnes affectées</button>`;
     }
+    
+    // Fallback
     return `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`;
 })()}
             </div>
