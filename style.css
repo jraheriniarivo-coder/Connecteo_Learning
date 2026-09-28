@@ -1672,3 +1672,88 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
 }
+/* ==================== BADGES DE MODE ==================== */
+.badge-mode {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.badge-auto {
+    background: #27ae60;
+    color: #fff;
+}
+
+.badge-locked {
+    background: var(--gray);
+    color: #fff;
+}
+
+.badge-mandatory {
+    background: #e74c3c;
+    color: #fff;
+}
+
+.badge-late {
+    background: #c0392b;
+    color: #fff;
+    animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.course-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.course-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(128, 130, 132, 0.08) 10px,
+        rgba(128, 130, 132, 0.08) 20px
+    );
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.prereq-msg {
+    font-size: 0.72rem;
+    color: var(--gray);
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px dashed #ddd;
+}
+
+.prereq-msg b {
+    color: var(--primary-dark);
+}
+
+/* Info deadline dans "Mes formations" */
+.deadline-info {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary-dark);
+    background: var(--primary-light);
+    padding: 6px 12px;
+    border-radius: 6px;
+    margin: 8px 0;
+}
+
+.deadline-info.deadline-late {
+    background: #fbe9e7;
+    color: #c0392b;
+}

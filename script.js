@@ -174,43 +174,62 @@ const { data: coursesData, error: coursesError } = await query;
         courses = coursesData || [];
     }
 
-    // Charger les groupes (enrollments)
-    const { data: groupesData, error: groupesError } = await supabaseClient
-        .from('enrollments')
-        .select('*');
-    if (groupesError) {
-        console.error('Erreur chargement groupes:', groupesError);
-    } else {
-        groupes = (groupesData || []).map(g => ({
-            id: g.id,
-            nom: g.groupe,
-            coursId: g.course_id,
-            dateDebut: g.date_debut,
-            dateFin: g.date_fin,
-            participants: []
-        }));
-    }
-
-    // Charger la progression de l'utilisateur connecté
-    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    if (sessionUser) {
-        const { data: progressData, error: progressError } = await supabaseClient
-            .from('progress')
-            .select('*')
-            .eq('user_id', sessionUser.username);
-        if (progressError) {
-            console.error('Erreur chargement progression:', progressError);
-        } else {
-            (progressData || []).forEach(p => {
-                const course = courses.find(c => c.id === p.course_id);
-                if (course) {
-                    course.progress = p.completed ? 100 : 0;
-                    course.score = p.score;
-                }
+   // Charger les groupes (enrollments) avec les profils
+const { data: groupesData, error: groupesError } = await supabaseClient
+    .from('enrollments')
+    .select(`
+        id, user_id, course_id, groupe, date_debut, date_fin,
+        profiles:user_id (full_name, matricule, bu, fonction)
+    `);
+if (groupesError) {
+    console.error('Erreur chargement groupes:', groupesError);
+} else {
+    const groupsMap = {};
+    (groupesData || []).forEach(g => {
+        const key = `${g.groupe}__${g.course_id}`;
+        if (!groupsMap[key]) {
+            groupsMap[key] = {
+                id: g.id,
+                nom: g.groupe,
+                coursId: g.course_id,
+                dateDebut: g.date_debut,
+                dateFin: g.date_fin,
+                participants: []
+            };
+        }
+        if (g.profiles) {
+            groupsMap[key].participants.push({
+                user_id: g.user_id,
+                nom: g.profiles.full_name,
+                matricule: g.profiles.matricule,
+                bu: g.profiles.bu,
+                fonction: g.profiles.fonction
             });
         }
+    });
+    groupes = Object.values(groupsMap);
+}
+
+// Charger les affectations de l'utilisateur connecté
+const sessionUserForEnroll = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+window.userEnrollments = []; // variable globale
+if (sessionUserForEnroll) {
+    // Récupérer l'id du profil à partir du username
+    const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('username', sessionUserForEnroll.username)
+        .single();
+
+    if (profileData) {
+        const { data: enrollData } = await supabaseClient
+            .from('enrollments')
+            .select('course_id')
+            .eq('user_id', profileData.id);
+        window.userEnrollments = (enrollData || []).map(e => e.course_id);
     }
 }
+
 
 // ============================================
 // MENU UTILISATEUR
@@ -300,8 +319,13 @@ function renderCatalogue() {
     }
 
     titleEl.textContent = currentTheme;
-    const themeCourses = courses.filter(c => c.theme === currentTheme && 
-        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
+    
+    // Filtrage : exclure les cours "assigned_only" du catalogue
+    const themeCourses = courses.filter(c => 
+        c.theme === currentTheme && 
+        c.visibility_mode !== 'assigned_only' &&
+        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm))
+    );
 
     const levels = [1, 2, 3, 4];
     let html = '<div class="levels-grid">';
@@ -310,13 +334,7 @@ function renderCatalogue() {
         html += `
             <div class="level-column">
                 <h4>Niveau ${level}</h4>
-                ${coursesForLevel.map(course => `
-                    <div class="course-item" data-course-id="${course.id}">
-                        ${course.progress === 100 ? '<span class="badge-completed">Terminé ✓</span>' : ''}
-                        <div class="course-item-title">${course.title}</div>
-                        <div class="course-item-duree">⏱ ${course.duree}</div>
-                    </div>
-                `).join('')}
+                ${coursesForLevel.map(course => renderCatalogueCard(course)).join('')}
             </div>
         `;
     });
@@ -329,6 +347,51 @@ function renderCatalogue() {
             renderCatalogue();
         });
     });
+}
+
+// Fonction utilitaire pour afficher une carte du catalogue avec badge
+function renderCatalogueCard(course) {
+    let badgeHtml = '';
+    let lockedClass = '';
+    
+    switch (course.visibility_mode) {
+        case 'auto_enrollment_with_validation':
+            badgeHtml = '<span class="badge-mode badge-auto">🟢 Auto-inscription</span>';
+            break;
+        case 'unlock_by_progression':
+            const prereq = courses.find(c => c.id === course.prerequisite_course_id);
+            badgeHtml = `<span class="badge-mode badge-locked">🔒 À débloquer</span>`;
+            lockedClass = 'course-locked';
+            break;
+        case 'mandatory':
+            const now = new Date();
+            const deadline = course.deadline ? new Date(course.deadline) : null;
+            if (deadline && deadline < now) {
+                badgeHtml = '<span class="badge-mode badge-late">🔴 EN RETARD</span>';
+            } else {
+                badgeHtml = '<span class="badge-mode badge-mandatory">🔴 OBLIGATOIRE</span>';
+            }
+            break;
+    }
+    
+    // Message prérequis pour les cours verrouillés
+    let prereqMsg = '';
+    if (course.visibility_mode === 'unlock_by_progression' && course.prerequisite_course_id) {
+        const prereq = courses.find(c => c.id === course.prerequisite_course_id);
+        if (prereq) {
+            prereqMsg = `<div class="prereq-msg">À débloquer après : <b>${prereq.title}</b></div>`;
+        }
+    }
+    
+    return `
+        <div class="course-item ${lockedClass}" data-course-id="${course.id}">
+            ${course.progress === 100 ? '<span class="badge-completed">Terminé ✓</span>' : ''}
+            ${badgeHtml}
+            <div class="course-item-title">${course.title}</div>
+            <div class="course-item-duree">⏱ ${course.duree}</div>
+            ${prereqMsg}
+        </div>
+    `;
 }
 
 function renderCourseDetail(course, container, titleEl) {
@@ -377,8 +440,11 @@ function renderMesFormations() {
     const searchInput = document.getElementById('searchInputMesFormations');
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-    const assignedCourses = courses.filter(c => c.assigned && 
-        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm)));
+    // Ne garder que les cours réellement affectés à l'utilisateur connecté
+    const assignedCourses = courses.filter(c => 
+        window.userEnrollments && window.userEnrollments.includes(c.id) &&
+        (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm))
+    );
 
     container.innerHTML = '';
     if (assignedCourses.length === 0) {
@@ -386,16 +452,35 @@ function renderMesFormations() {
         return;
     }
 
+    const now = new Date();
+
     assignedCourses.forEach(course => {
+        // Déterminer le badge et l'état
+        let badgeHtml = '';
+        let extraInfo = '';
+
+        if (course.visibility_mode === 'mandatory' && course.deadline) {
+            const deadline = new Date(course.deadline);
+            if (deadline < now) {
+                badgeHtml = '<span class="badge-mode badge-late">🔴 EN RETARD</span>';
+                extraInfo = `<div class="deadline-info deadline-late">⚠️ Date limite dépassée : ${deadline.toLocaleDateString('fr-FR')}</div>`;
+            } else {
+                badgeHtml = '<span class="badge-mode badge-mandatory">🔴 OBLIGATOIRE</span>';
+                extraInfo = `<div class="deadline-info">📅 À terminer avant le ${deadline.toLocaleDateString('fr-FR')}</div>`;
+            }
+        }
+
         const card = document.createElement('div');
         card.className = 'course-card';
         card.innerHTML = `
             <div class="course-header" style="background: linear-gradient(135deg, ${course.color}33, ${course.color});">
                 ${course.theme}
+                ${badgeHtml}
             </div>
             <div class="course-body">
                 <div class="course-title">${course.title}</div>
                 <p class="course-desc">${course.description}</p>
+                ${extraInfo}
                 <div class="course-meta">
                     <span>⏱ ${course.duree}</span>
                     <span>${course.progress || 0}% terminé</span>
@@ -409,7 +494,6 @@ function renderMesFormations() {
         container.appendChild(card);
     });
 }
-
 // ============================================
 // ADMIN : GESTION DES COURS
 // ============================================
