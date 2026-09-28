@@ -229,7 +229,7 @@ if (sessionUserForEnroll) {
         window.userEnrollments = (enrollData || []).map(e => e.course_id);
     }
 }
-
+}
 
 // ============================================
 // MENU UTILISATEUR
@@ -1178,7 +1178,7 @@ async function loadProfiles() {
     const tbody = document.getElementById('profilesTableBody');
     if (!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray);">Chargement...</td></tr>';
 
     const { data, error } = await supabaseClient
         .from('profiles')
