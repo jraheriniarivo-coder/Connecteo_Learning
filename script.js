@@ -867,7 +867,7 @@ function openSessionModal(courseId) {
         });
     });
 }
-
+/*
 function openGroupDetail(groupId) {
     const group = groupes.find(g => g.id === groupId);
     if (!group) return;
@@ -1691,4 +1691,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelector('nav a[data-section="dashboard"]')?.click();
         }
     }
+        */
 });
