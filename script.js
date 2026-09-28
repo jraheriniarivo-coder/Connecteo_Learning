@@ -10,8 +10,8 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // CONFIGURATION DES UTILISATEURS (simulation)
 // ============================================
 const users = [
-    { username: "manager1", password: "pass1", name: "Manager 1", role: "apprenant" },
-    { username: "manager2", password: "pass2", name: "Manager 2", role: "apprenant" },
+    { username: "test1", password: "pass1", name: "Test 1", role: "apprenant" },
+    { username: "test2", password: "pass2", name: "Test 2", role: "apprenant" },
     { username: "admin", password: "admin", name: "Dylan", role: "admin" }
 ];
 
