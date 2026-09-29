@@ -256,14 +256,32 @@ if (sessionUserForEnroll) {
         .eq('username', sessionUserForEnroll.username)
         .single();
 
-    if (profileData) {
-        const { data: enrollData } = await supabaseClient
-            .from('enrollments')
-            .select('course_id')
-            .eq('user_id', profileData.id);
-        window.userEnrollments = (enrollData || []).map(e => e.course_id);
+           if (profileData) {
+            const { data: enrollData } = await supabaseClient
+                .from('enrollments')
+                .select('course_id')
+                .eq('user_id', profileData.id);
+            window.userEnrollments = (enrollData || []).map(e => e.course_id);
+
+            // Charger la progression de l'utilisateur
+            const { data: progressData, error: progressError } = await supabaseClient
+                .from('progress')
+                .select('*')
+                .eq('user_id', sessionUserForEnroll.username);
+
+            if (progressError) {
+                console.error('Erreur chargement progression:', progressError);
+            } else {
+                (progressData || []).forEach(p => {
+                    const course = courses.find(c => c.id === p.course_id);
+                    if (course) {
+                        course.progress = p.completed ? 100 : 0;
+                        course.score = p.score;
+                    }
+                });
+            }
+        }
     }
-}
 }
 
 // ============================================
