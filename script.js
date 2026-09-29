@@ -1004,68 +1004,70 @@ function openAffectationModal(courseId) {
     });
 }
 
-function showAffectationList(courseId) {
+async function showAffectationList(courseId) {
     const container = document.getElementById('affectationContent');
-    const collaborateurs = [
-        { nom: "Rabe", fonction: "Manager", matricule: "M001", bu: "Comete" },
-        { nom: "Rakoto", fonction: "CSA", matricule: "C002", bu: "YAS" },
-        { nom: "Razafy", fonction: "Manager", matricule: "M003", bu: "Mvola" },
-        { nom: "Andry", fonction: "CEO", matricule: "CEO001", bu: "Support" },
-        { nom: "Lala", fonction: "Manager", matricule: "M004", bu: "Openfield" }
-    ];
+    container.innerHTML = '<p style="text-align:center;">Chargement...</p>';
+
+    // Charger les profils réels depuis Supabase
+    const { data: profiles, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .order('full_name');
+
+    if (error || !profiles) {
+        container.innerHTML = '<p style="color:var(--error);">Erreur de chargement des profils.</p>';
+        return;
+    }
+
+    // Filtrer sur les apprenants (pas les admins)
+    const collaborateurs = profiles.filter(p => p.role !== 'admin');
 
     let html = `<p>Filtrer par BU : 
         <select id="buFilter">
             <option value="">Toutes les BU</option>
-            <option>Comete</option><option>YAS</option><option>Mvola</option><option>Support</option><option>Openfield</option>
+            ${[...new Set(collaborateurs.map(c => c.bu).filter(Boolean))].map(bu => `<option>${bu}</option>`).join('')}
         </select>
     </p>`;
     html += '<table class="admin-table"><thead><tr><th>Sélection</th><th>Fonction</th><th>Matricule</th><th>BU</th><th>Nom Prénom</th></tr></thead><tbody id="collabTableBody">';
     collaborateurs.forEach((c, index) => {
-        html += `<tr data-bu="${c.bu}"><td><input type="checkbox" class="collabCheck" data-index="${index}"></td><td>${c.fonction}</td><td>${c.matricule}</td><td>${c.bu}</td><td>${c.nom}</td></tr>`;
+        html += `<tr data-bu="${c.bu || ''}"><td><input type="checkbox" class="collabCheck" data-index="${index}"></td><td>${c.fonction || '—'}</td><td>${c.matricule || '—'}</td><td>${c.bu || '—'}</td><td>${c.full_name || c.username}</td></tr>`;
     });
     html += '</tbody></table>';
-    html += `<input type="text" id="groupName" placeholder="Nom du groupe (obligatoire)" style="width:100%; padding:10px; margin-top:10px;">`;
-    html += `<button class="btn" id="btnValiderGroupe">Valider le groupe</button>`;
+    html += '<input type="text" id="groupName" placeholder="Nom du groupe (obligatoire)" style="width:100%; padding:10px; margin-top:10px;">';
+    html += '<button class="btn" id="btnValiderGroupe">Valider le groupe</button>';
     container.innerHTML = html;
 
     document.getElementById('buFilter').addEventListener('change', (e) => {
         const val = e.target.value;
         document.querySelectorAll('#collabTableBody tr').forEach(tr => {
-            if (!val || tr.dataset.bu === val) {
-                tr.style.display = '';
-            } else {
-                tr.style.display = 'none';
-            }
+            tr.style.display = (!val || tr.dataset.bu === val) ? '' : 'none';
         });
     });
 
-    document.getElementById('btnValiderGroupe').addEventListener('click', () => {
+    document.getElementById('btnValiderGroupe').addEventListener('click', async () => {
         const nomGroupe = document.getElementById('groupName').value.trim();
-        if (!nomGroupe) {
-            alert('Le nom du groupe est obligatoire');
-            return;
-        }
-        const selected = [];
+        if (!nomGroupe) { alert('Le nom du groupe est obligatoire'); return; }
+        const selectedIds = [];
         document.querySelectorAll('.collabCheck:checked').forEach(cb => {
-            const idx = parseInt(cb.dataset.index);
-            selected.push(collaborateurs[idx]);
+            selectedIds.push(collaborateurs[parseInt(cb.dataset.index)].id);
         });
-        if (selected.length === 0) {
-            alert('Sélectionnez au moins un participant');
-            return;
-        }
-        const newGroup = {
-            id: groupes.length + 1,
-            nom: nomGroupe,
-            coursId: courseId,
-            dateDebut: "2026-09-01",
-            dateFin: "2026-09-30",
-            participants: selected
-        };
-        groupes.push(newGroup);
+        if (selectedIds.length === 0) { alert('Sélectionnez au moins un participant'); return; }
+
+        // Enregistrer dans Supabase
+        const rows = selectedIds.map(userId => ({
+            user_id: userId,
+            course_id: courseId,
+            groupe: nomGroupe,
+            date_debut: new Date().toISOString().split('T')[0],
+            date_fin: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+        }));
+        const { error } = await supabaseClient.from('enrollments').insert(rows);
+        if (error) { alert('Erreur : ' + error.message); return; }
+
         closeModal('affectationModalOverlay');
+        await loadDataFromSupabase();
         renderAdminCourses();
+        alert('✅ ' + selectedIds.length + ' participant(s) affecté(s).');
     });
 }
 
@@ -1620,8 +1622,15 @@ async function loadResults() {
     });
 }
 function exportResultsToCSV() {
+    const now = new Date();
+    const dateStr = now.toLocaleString('fr-FR');
+
+    // Récupérer les données actuelles depuis la table affichée
     const rows = [];
-    rows.push(['Apprenant', 'Cours', 'Statut', 'Score', 'Date de complétion']);
+    rows.push(['RAPPORT DE FORMATION - Export du ' + dateStr]);
+    rows.push([]);
+    rows.push(['Détail des progressions']);
+    rows.push(['Nom', 'Matricule', 'BU', 'Fonction', 'Cours', 'Thématique', 'Statut', 'Score', 'Date de complétion']);
 
     const tbody = resultsTableBody;
     if (!tbody) return;
@@ -1629,16 +1638,43 @@ function exportResultsToCSV() {
     tbody.querySelectorAll('tr').forEach(tr => {
         const cells = tr.querySelectorAll('td');
         if (cells.length >= 5) {
-            rows.push(Array.from(cells).slice(0, 5).map(c => '"' + c.textContent.trim().replace(/"/g, '""') + '"'));
+            const userId = cells[0].textContent.trim();
+            const courseTitle = cells[1].textContent.trim();
+            const statut = cells[2].textContent.trim();
+            const score = cells[3].textContent.trim();
+            const date = cells[4].textContent.trim();
+
+            // Enrichir avec les infos du profil et du cours
+            const profile = allProfiles.find(p => p.username === userId) || {};
+            const course = courses.find(c => c.title === courseTitle) || {};
+
+            rows.push([
+                profile.full_name || userId,
+                profile.matricule || '',
+                profile.bu || '',
+                profile.fonction || '',
+                courseTitle,
+                course.theme || '',
+                statut,
+                score,
+                date
+            ]);
         }
     });
 
-    const csvContent = rows.map(r => r.join(';')).join('\n');
+    // Synthèse
+    rows.push([]);
+    rows.push(['SYNTHÈSE']);
+    rows.push(['Total lignes', tbody.querySelectorAll('tr').length]);
+    const completed = tbody.querySelectorAll('.status-badge.completed').length;
+    rows.push(['Cours terminés', completed]);
+
+    const csvContent = rows.map(r => r.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'resultats_formations_' + new Date().toISOString().slice(0,10) + '.csv';
+    link.download = 'rapport_formations_' + now.toISOString().slice(0, 10) + '.csv';
     link.click();
     URL.revokeObjectURL(url);
 }

@@ -1940,3 +1940,36 @@ body {
     outline: none;
     border-color: var(--primary);
 }
+.recap-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+    width: 100%;
+}
+
+.recap-card h3 {
+    color: var(--primary-dark);
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+/* Layout : bar chart à gauche, récap à droite sur grands écrans */
+@media (min-width: 992px) {
+    .global-charts {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 30px;
+        align-items: start;
+    }
+}
+
+/* Sur petit écran : empilé */
+@media (max-width: 991px) {
+    .global-charts {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+}
