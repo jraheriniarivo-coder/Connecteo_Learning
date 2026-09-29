@@ -462,9 +462,9 @@ function renderCourseDetail(course, container, titleEl) {
         // Vérifier si le prérequis est terminé
         const prereqDone = prereq && prereq.progress === 100;
         if (prereqDone) {
-            return course.externalUrl 
-                ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
-                : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+            return course.external_url
+        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
+        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
         }
         return `<button class="btn btn-disabled" disabled>🔒 À débloquer après : ${prereqTitle}</button>`;
     }
@@ -473,19 +473,19 @@ function renderCourseDetail(course, container, titleEl) {
     if (mode === 'auto_enrollment_with_validation') {
         // Si l'utilisateur est déjà inscrit/affecté, il peut commencer
         if (isAssigned) {
-            return course.externalUrl 
-                ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
-                : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+            return course.external_url
+        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
+        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
         }
         return `<button class="btn" onclick="requestEnrollment(${course.id})">📩 Demander l'inscription</button>`;
     }
     
     // Priorité 3 : obligatoire ou affecté
     if (mode === 'mandatory' || isAssigned) {
-        return course.externalUrl 
-            ? `<a href="${course.externalUrl}" class="btn" target="_blank">Commencer</a>` 
-            : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
-    }
+    return course.external_url
+        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
+        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        }
     
     // Priorité 4 : affectation uniquement (assigned_only)
     if (mode === 'assigned_only') {
