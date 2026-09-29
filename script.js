@@ -14,6 +14,41 @@ const users = [
     { username: "test2", password: "pass2", name: "Test 2", role: "apprenant" },
     { username: "admin", password: "admin", name: "Dylan", role: "admin" }
 ];
+// Notifications fictives (démo)
+const mockNotifications = [
+    {
+        id: 1,
+        nom: 'DUPONT Marie',
+        matricule: 'MAT001',
+        bu: 'Alpha',
+        fonction: 'CSA',
+        cours: 'Devenir un leader inspirant',
+        duree: '2h30',
+        raison: 'Je souhaite développer mon leadership pour mieux accompagner mon équipe au quotidien.',
+        date: '28/09/2026'
+    },
+    {
+        id: 2,
+        nom: 'MARTIN Sophie',
+        matricule: 'MAT002',
+        bu: 'Beta',
+        fonction: 'CSA',
+        cours: 'Devenir un leader inspirant',
+        duree: '2h30',
+        raison: 'Dans le cadre de mon plan de compétence, ce cours me permettrait de progresser vers le niveau suivant.',
+        date: '28/09/2026'
+    }
+];
+
+// Compteurs fictifs pour la colonne "Validés"
+const demoEnrollmentCounts = {
+    'Devenir un leader inspirant': 3
+};
+
+// Compteurs fictifs pour la colonne "Terminés"
+const demoCompletedCounts = {
+    'Devenir un leader inspirant': 1
+};
 
 // ============================================
 // DONNÉES DES COURS
@@ -543,7 +578,11 @@ function renderAdminCourses() {
     const tbody = adminCoursesTable;
     tbody.innerHTML = '';
 
-    courses.forEach(course => {
+    const filteredCourses = applyCourseFilters();
+const countEl = document.getElementById('courseFilterCount');
+if (countEl) countEl.textContent = `${filteredCourses.length} / ${courses.length} cours`;
+
+filteredCourses.forEach(course => {
         const tr = document.createElement('tr');
         const sessionCount = groupes.filter(g => g.coursId === course.id).length;
 
@@ -558,6 +597,8 @@ function renderAdminCourses() {
             <td>${course.duree}</td>
             <td>${course.type === 'obligatoire' ? 'Obligatoire' : 'Information'}</td>
             <td><span class="session-link" data-course-id="${course.id}">${sessionCount}</span></td>
+            <td>${getValidatedCount(course)}</td>
+            <td>${getCompletedCount(course)}</td>
             <td>
                 <button class="admin-btn edit" data-id="${course.id}">Modifier</button>
                 <button class="admin-btn affect" data-id="${course.id}">Affecter</button>
@@ -601,6 +642,7 @@ function renderAdminCourses() {
             openAffectationModal(courseId);
         });
     });
+    populateCourseFilters();
 }
 
 function openAddCourseModal() {
@@ -1686,6 +1728,206 @@ async function loadVisibilitySummary() {
     }
 }
 // ============================================
+// NOTIFICATIONS (CLOCHE)
+// ============================================
+function renderNotifications() {
+    const list = document.getElementById('notificationList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (mockNotifications.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:30px;">Aucune demande en attente.</p>';
+        return;
+    }
+    mockNotifications.forEach(notif => {
+        const div = document.createElement('div');
+        div.className = 'notification-item';
+        div.innerHTML = `
+            <h4>${notif.cours}</h4>
+            <div class="notif-meta"><b>Demandeur :</b> ${notif.nom}</div>
+            <div class="notif-meta"><b>Matricule :</b> ${notif.matricule}</div>
+            <div class="notif-meta"><b>BU :</b> ${notif.bu} · <b>Fonction :</b> ${notif.fonction}</div>
+            <div class="notif-meta"><b>Durée :</b> ${notif.duree} · <b>Date :</b> ${notif.date}</div>
+            <div class="notif-reason">"${notif.raison}"</div>
+            <div class="notif-actions">
+                <button class="notif-btn-accept" onclick="handleNotifAction(${notif.id}, 'accept')">✅ Valider</button>
+                <button class="notif-btn-refuse" onclick="handleNotifAction(${notif.id}, 'refuse')">✕ Refuser</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function openNotificationPanel() {
+    const panel = document.getElementById('notificationPanel');
+    if (panel) { renderNotifications(); panel.classList.add('open'); }
+}
+
+function closeNotificationPanel() {
+    const panel = document.getElementById('notificationPanel');
+    if (panel) panel.classList.remove('open');
+}
+
+function handleNotifAction(notifId, action) {
+    const notif = mockNotifications.find(n => n.id === notifId);
+    if (!notif) return;
+    alert(action === 'accept'
+        ? '✅ Demande validée pour ' + notif.nom + '.\n\nCette personne pourra désormais accéder au cours.'
+        : '❌ Demande refusée pour ' + notif.nom + '.');
+    const index = mockNotifications.findIndex(n => n.id === notifId);
+    if (index > -1) mockNotifications.splice(index, 1);
+    const badge = document.getElementById('bellBadge');
+    if (badge) {
+        badge.textContent = mockNotifications.length;
+        if (mockNotifications.length === 0) badge.style.display = 'none';
+    }
+    renderNotifications();
+}
+
+// ============================================
+// DEMANDE D'INSCRIPTION (FORMULAIRE)
+// ============================================
+function requestEnrollment(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    if (!sessionUser) { alert('Vous devez être connecté.'); return; }
+    const userProfile = (typeof allProfiles !== 'undefined' ? allProfiles : []).find(p => p.username === sessionUser.username) || {};
+
+    const html = `
+        <div class="modal-overlay" id="requestEnrollmentModal">
+            <div class="modal-box" style="max-width:600px;">
+                <h3>📩 Demande d'inscription</h3>
+                <p style="font-size:0.9rem;color:var(--gray);margin-bottom:20px;">Votre demande sera transmise à l'administrateur pour validation.</p>
+
+                <div style="background:var(--gray-light);border-radius:8px;padding:15px;margin-bottom:20px;">
+                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📋 Informations du demandeur</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">
+                        <div><b>Nom :</b> ${sessionUser.name || '—'}</div>
+                        <div><b>Identifiant :</b> ${sessionUser.username || '—'}</div>
+                        <div><b>Matricule :</b> ${userProfile.matricule || '—'}</div>
+                        <div><b>BU :</b> ${userProfile.bu || '—'}</div>
+                    </div>
+                </div>
+
+                <div style="background:var(--primary-light);border-radius:8px;padding:15px;margin-bottom:20px;">
+                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📚 Formation demandée</div>
+                    <div style="font-size:0.9rem;">
+                        <div><b>Titre :</b> ${course.title}</div>
+                        <div><b>Durée :</b> ${course.duree}</div>
+                        <div><b>Thématique :</b> ${course.theme}</div>
+                    </div>
+                </div>
+
+                <label style="display:block;font-weight:700;color:var(--gray-dark);margin-bottom:8px;">Raison de la demande <span style="color:#e74c3c;">*</span></label>
+                <textarea id="enrollmentReason" rows="4" placeholder="Expliquez brièvement pourquoi vous souhaitez suivre cette formation..." style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Mada',sans-serif;font-size:0.95rem;margin-bottom:15px;"></textarea>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('requestEnrollmentModal')">Annuler</button>
+                    <button class="btn" onclick="submitEnrollmentRequest(${courseId})">📨 Envoyer la demande</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function submitEnrollmentRequest(courseId) {
+    const reason = document.getElementById('enrollmentReason').value.trim();
+    if (!reason) { alert('Veuillez indiquer une raison pour votre demande.'); return; }
+    const course = courses.find(c => c.id === courseId);
+    closeModal('requestEnrollmentModal');
+    alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
+}
+
+// ============================================
+// COLONNES VALIDÉS / TERMINÉS (Gestion des cours)
+// ============================================
+function getValidatedCount(course) {
+    if (course.visibility_mode !== 'auto_enrollment_with_validation') {
+        return '<span style="color:var(--gray);">—</span>';
+    }
+    const count = demoEnrollmentCounts[course.title] || 0;
+    return `<span style="color:var(--secondary-purple);font-weight:800;">${count}</span>`;
+}
+
+function getCompletedCount(course) {
+    if (course.visibility_mode !== 'auto_enrollment_with_validation') {
+        return '<span style="color:var(--gray);">—</span>';
+    }
+    const count = demoCompletedCounts[course.title] || 0;
+    return `<span style="color:var(--success, #27ae60);font-weight:800;">${count}</span>`;
+}
+
+// ============================================
+// FILTRES DE COURS
+// ============================================
+function populateCourseFilters() {
+    const themeSelect = document.getElementById('filterTheme');
+    const titleSelect = document.getElementById('filterTitle');
+    const niveauSelect = document.getElementById('filterNiveau');
+    const dureeSelect = document.getElementById('filterDuree');
+    const typeSelect = document.getElementById('filterType');
+    if (!themeSelect || !titleSelect) return;
+
+    // Conserver la valeur sélectionnée
+    const keep = {
+        theme: themeSelect.value, title: titleSelect.value,
+        niveau: niveauSelect.value, duree: dureeSelect.value, type: typeSelect.value
+    };
+
+    const themes = [...new Set(courses.map(c => c.theme).filter(Boolean))].sort();
+    const titles = [...new Set(courses.map(c => c.title).filter(Boolean))].sort();
+    const niveaux = [...new Set(courses.map(c => c.niveau).filter(n => n != null))].sort();
+    const durees = [...new Set(courses.map(c => c.duree).filter(Boolean))].sort();
+    const types = [...new Set(courses.map(c => c.type).filter(Boolean))].sort();
+
+    themeSelect.innerHTML = '<option value="">Toutes les thématiques</option>';
+    themes.forEach(t => themeSelect.innerHTML += `<option value="${t}" ${t === keep.theme ? 'selected' : ''}>${t}</option>`);
+
+    titleSelect.innerHTML = '<option value="">Tous les titres</option>';
+    titles.forEach(t => titleSelect.innerHTML += `<option value="${t}" ${t === keep.title ? 'selected' : ''}>${t}</option>`);
+
+    niveauSelect.innerHTML = '<option value="">Tous les niveaux</option>';
+    niveaux.forEach(n => niveauSelect.innerHTML += `<option value="${n}" ${String(n) === keep.niveau ? 'selected' : ''}>Niveau ${n}</option>`);
+
+    dureeSelect.innerHTML = '<option value="">Toutes les durées</option>';
+    durees.forEach(d => dureeSelect.innerHTML += `<option value="${d}" ${d === keep.duree ? 'selected' : ''}>${d}</option>`);
+
+    typeSelect.innerHTML = '<option value="">Tous les types</option>';
+    types.forEach(t => typeSelect.innerHTML += `<option value="${t}" ${t === keep.type ? 'selected' : ''}>${t.charAt(0).toUpperCase() + t.slice(1)}</option>`);
+}
+
+function applyCourseFilters() {
+    return courses.filter(course => {
+        const theme = document.getElementById('filterTheme')?.value;
+        const title = document.getElementById('filterTitle')?.value;
+        const niveau = document.getElementById('filterNiveau')?.value;
+        const duree = document.getElementById('filterDuree')?.value;
+        const type = document.getElementById('filterType')?.value;
+        const session = document.getElementById('filterSession')?.value;
+
+        if (theme && course.theme !== theme) return false;
+        if (title && course.title !== title) return false;
+        if (niveau && String(course.niveau) !== niveau) return false;
+        if (duree && course.duree !== duree) return false;
+        if (type && course.type !== type) return false;
+
+        const sessionCount = groupes.filter(g => g.coursId === course.id).length;
+        if (session === 'with' && sessionCount === 0) return false;
+        if (session === 'without' && sessionCount > 0) return false;
+
+        return true;
+    });
+}
+
+function resetCourseFilters() {
+    ['filterTheme', 'filterTitle', 'filterNiveau', 'filterDuree', 'filterType', 'filterSession'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    renderAdminCourses();
+}
+// ============================================
 // INITIALISATION
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1723,6 +1965,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('btnAddSection')?.addEventListener('click', addSectionModule);
         document.getElementById('btnAddVideo')?.addEventListener('click', addVideoModule);
         document.getElementById('btnAddQuiz')?.addEventListener('click', addQuizModule);
+        // Cloche
+        document.getElementById('bellBtn')?.addEventListener('click', openNotificationPanel);
+
+        // Filtres des cours
+        document.getElementById('filterTheme')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('filterTitle')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('filterNiveau')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('filterDuree')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('filterType')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('filterSession')?.addEventListener('change', renderAdminCourses);
+        document.getElementById('btnResetCourseFilters')?.addEventListener('click', resetCourseFilters);
     }
 
     if (isLearnerPage) {

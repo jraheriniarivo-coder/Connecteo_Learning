@@ -40,18 +40,24 @@
                 <img src="logo.svg" class="topbar-logo-img" alt="Logo">
                 <span>Bienvenue</span>
             </div>
+            <div class="topbar-actions">
+                    <button class="bell-btn" id="bellBtn" title="Demandes d'inscription">
+                    🔔
+                    <span class="bell-badge" id="bellBadge">2</span>
+                </button>
             <div class="user-menu">
                 <button class="user-menu-button" id="userMenuButton">
                     <span class="user-avatar">👤</span>
                     <span id="currentUser"></span>
                     <span class="chevron">▾</span>
                 </button>
-                <div class="user-dropdown" id="userDropdown">
+            <div class="user-dropdown" id="userDropdown">
                     <a href="index.html?force=learner" id="goToLearner">Voir l'espace apprenant</a>
                     <a href="#" id="logoutBtn">Déconnexion</a>
-                </div>
             </div>
-        </header>
+            </div>
+        </div>
+       </header>
 
         <main class="container">
             <!-- Section Admin (unique) -->
@@ -100,10 +106,27 @@
 </div>
 
                 <!-- Onglet Gestion des cours -->
-                <div id="tab-cours" class="tab-content">
+               <div id="tab-cours" class="tab-content">
     <div class="admin-actions">
         <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
     </div>
+
+    <!-- Filtres de cours -->
+    <div class="course-filters">
+        <select id="filterTheme" class="filter-select"><option value="">Toutes les thématiques</option></select>
+        <select id="filterTitle" class="filter-select"><option value="">Tous les titres</option></select>
+        <select id="filterNiveau" class="filter-select"><option value="">Tous les niveaux</option></select>
+        <select id="filterDuree" class="filter-select"><option value="">Toutes les durées</option></select>
+        <select id="filterType" class="filter-select"><option value="">Tous les types</option></select>
+        <select id="filterSession" class="filter-select">
+            <option value="">Toutes les sessions</option>
+            <option value="with">Avec session(s)</option>
+            <option value="without">Sans session</option>
+        </select>
+        <button class="btn btn-secondary" id="btnResetCourseFilters">Réinitialiser</button>
+        <span class="filter-count" id="courseFilterCount"></span>
+    </div>
+
     <table class="admin-table">
         <thead>
             <tr>
@@ -113,12 +136,12 @@
                 <th>Durée</th>
                 <th>Type</th>
                 <th>Session</th>
+                <th>Validés</th>
+                <th>Terminés</th>
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="adminCoursesTable">
-            <!-- Rempli dynamiquement -->
-        </tbody>
+        <tbody id="adminCoursesTable"></tbody>
     </table>
 </div>
 
@@ -287,5 +310,12 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
+    <div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h3>📨 Demandes d'inscription</h3>
+        <button class="notification-close" onclick="closeNotificationPanel()">✕</button>
+    </div>
+    <div class="notification-list" id="notificationList"></div>
+</div>
 </body>
 </html>
