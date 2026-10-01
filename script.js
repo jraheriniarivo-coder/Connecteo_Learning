@@ -1513,36 +1513,62 @@ loadVisibilitySummary();
 // ============================================
 function renderDashboard() {
     if (!isLearnerPage) return;
-    const totalCours = courses.length;
-    const completedCours = courses.filter(c => c.progress === 100).length;
-    const progression = totalCours > 0 ? Math.round((completedCours / totalCours) * 100) : 0;
-
+    const container = document.getElementById('mesFormationsContainer');
+    
+    // Calculs dynamiques
+    const totalAssignes = courses.filter(c => window.userEnrollments.includes(c.id)).length;
+    const totalTermines = courses.filter(c => window.userEnrollments.includes(c.id) && c.progress === 100).length;
+    const progression = totalAssignes > 0 ? Math.round((totalTermines / totalAssignes) * 100) : 0;
+    
+    // Niveau : 1 par défaut, +1 tous les 3 cours terminés (max 5)
+    const niveau = Math.min(5, 1 + Math.floor(totalTermines / 3));
+    const labelsNiveau = {
+        1: 'Manager débutant',
+        2: 'Manager en développement',
+        3: 'Manager confirmé',
+        4: 'Manager avancé',
+        5: 'Manager expert'
+    };
+    
+    // Points : 100 par cours terminé
+    const points = totalTermines * 100;
+    
+    // Badges : 1 par cours terminé
+    const badges = totalTermines;
+    
+    // Mise à jour de l'interface
+    document.getElementById('statNiveau').textContent = niveau;
+    document.getElementById('statNiveauLabel').textContent = labelsNiveau[niveau];
+    
+    document.getElementById('statPoints').textContent = points;
+    document.getElementById('statPointsLabel').textContent = 'Prochain palier : ' + ((Math.floor(points / 500) + 1) * 500) + ' pts';
+    
+    document.getElementById('statFormations').textContent = totalTermines + ' / ' + totalAssignes;
+    document.getElementById('statFormationsLabel').textContent = (totalAssignes - totalTermines) + ' restante(s)';
+    
+    document.getElementById('statBadges').textContent = badges;
+    document.getElementById('statBadgesLabel').textContent = badges > 0 ? '🏅'.repeat(Math.min(badges, 5)) : 'Aucun badge';
+    
+    // Barre de progression globale
     const fill = document.querySelector('.progress-global .fill');
     const span = document.querySelector('.progress-global span');
     if (fill && span) {
         fill.style.width = progression + '%';
         span.textContent = progression + '%';
     }
-
-    const statValues = document.querySelectorAll('.stat-card .value');
-    if (statValues.length >= 3) {
-        statValues[2].textContent = `${completedCours} / ${totalCours}`;
-        statValues[3].textContent = completedCours;
-    }
-
+    
+    // Graphique par thématique
     const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
     const themeProgress = themes.map(theme => {
-        const themeCourses = courses.filter(c => c.theme === theme);
+        const themeCourses = courses.filter(c => c.theme === theme && window.userEnrollments.includes(c.id));
         const themeCompleted = themeCourses.filter(c => c.progress === 100);
         return themeCourses.length > 0 ? Math.round((themeCompleted.length / themeCourses.length) * 100) : 0;
     });
-
+    
     const ctx = document.getElementById('progressChart');
     if (ctx) {
-        const context = ctx.getContext('2d');
         if (progressChartInstance) progressChartInstance.destroy();
-
-        progressChartInstance = new Chart(context, {
+        progressChartInstance = new Chart(ctx.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: themes,
@@ -1559,7 +1585,7 @@ function renderDashboard() {
                 responsive: true,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + '%'; } } }
+                    y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
                 }
             }
         });
