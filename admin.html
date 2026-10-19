@@ -56,8 +56,7 @@
                     <a href="#" id="logoutBtn">Déconnexion</a>
             </div>
             </div>
-        </div>
-       </header>
+         </header>
 
         <main class="container">
             <!-- Section Admin (unique) -->
@@ -80,7 +79,10 @@
             <div class="stat-card">Total groupes : <span id="globalTotalGroupes">0</span></div>
             <div class="stat-card">Taux de complétion moyen : <span id="globalCompletion">0%</span></div>
             </div>
-           <div class="global-charts">
+                      <div class="global-charts">
+           <div class="chart-container">
+                <canvas id="globalPieChart"></canvas>
+            </div>
            <div class="chart-container">
         <canvas id="globalBarChart"></canvas>
     </div>
@@ -308,8 +310,7 @@
             </form>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>    <script src="script.js"></script>
     <div class="notification-panel" id="notificationPanel">
     <div class="notification-header">
         <h3>📨 Demandes d'inscription</h3>

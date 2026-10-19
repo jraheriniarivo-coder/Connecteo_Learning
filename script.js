@@ -254,7 +254,7 @@ if (sessionUserForEnroll) {
         .from('profiles')
         .select('id')
         .eq('username', sessionUserForEnroll.username)
-        .single();
+        .maybeSingle();
 
            if (profileData) {
             const { data: enrollData } = await supabaseClient
@@ -267,7 +267,7 @@ if (sessionUserForEnroll) {
             const { data: progressData, error: progressError } = await supabaseClient
                 .from('progress')
                 .select('*')
-                .eq('user_id', sessionUserForEnroll.username);
+                .eq('user_id', profileData.id);
 
             if (progressError) {
                 console.error('Erreur chargement progression:', progressError);
@@ -896,7 +896,8 @@ function renderModules() {
                     }
                 } else {
                     optionsHtml += `<label>Réponse attendue (texte)</label>
-                    <input type="text" placeholder="Réponse correcte" value="${q.correct || ''}" oninput="modules[${index}].questions[${qIndex}].correct = this.value">`;
+                    <input type="text" placeholder="Réponse correcte" value="${q.correct || ''}" oninput="modules[${index}].questions[${qIndex}].correct = this.value">
+                    `;
                 }
                 moduleContent += `
                     <div class="question-block">
@@ -1423,8 +1424,8 @@ async function deleteAllProfiles() {
     }
 
     // Supprimer toutes les dépendances puis les profils
-    await supabaseClient.from('progress').delete().neq('id', 0);
-    await supabaseClient.from('enrollments').delete().neq('id', 0);
+    await supabaseClient.from('progress').delete().not('id', 'is', null);
+    await supabaseClient.from('enrollments').delete().not('id', 'is', null);
     const { error } = await supabaseClient.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
     if (error) {
