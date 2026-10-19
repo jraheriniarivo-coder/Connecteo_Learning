@@ -473,6 +473,10 @@ function renderCourseDetail(course, container, titleEl) {
     const mode = course.visibility_mode || 'assigned_only';
     const isAssigned = window.userEnrollments && window.userEnrollments.includes(course.id);
     
+    // ⬇️ LA NOUVELLE LIGNE EST ICI ⬇️
+    // On vérifie si le cours a du contenu HTML. Si oui, on pointe vers html-player.html
+    const playerUrl = course.html_content ? `html-player.html?id=${course.id}` : `course-player.html?id=${course.id}`;
+    
     // Priorité 1 : déblocage par progression
     if (mode === 'unlock_by_progression') {
         const prereq = courses.find(c => c.id === course.prerequisite_course_id);
@@ -482,7 +486,7 @@ function renderCourseDetail(course, container, titleEl) {
         if (prereqDone) {
             return course.external_url
         ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
         }
         return `<button class="btn btn-disabled" disabled>🔒 À débloquer après : ${prereqTitle}</button>`;
     }
@@ -493,7 +497,7 @@ function renderCourseDetail(course, container, titleEl) {
         if (isAssigned) {
             return course.external_url
         ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
         }
         return `<button class="btn" onclick="requestEnrollment(${course.id})">📩 Demander l'inscription</button>`;
     }
@@ -502,13 +506,13 @@ function renderCourseDetail(course, container, titleEl) {
     if (mode === 'mandatory' || isAssigned) {
     return course.external_url
         ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`;
+        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
         }
     
     // Priorité 4 : affectation uniquement (assigned_only)
     if (mode === 'assigned_only') {
         return isAssigned
-            ? `<a href="course-player.html?id=${course.id}" class="btn">Commencer</a>`
+            ? `<a href="${playerUrl}" class="btn">Commencer</a>` // Utilisation de playerUrl
             : `<button class="btn btn-disabled" disabled>Réservé aux personnes affectées</button>`;
     }
     
@@ -582,8 +586,8 @@ function renderMesFormations() {
                 <div class="course-progress">
                     <div class="fill" style="width: ${course.progress || 0}%;"></div>
                 </div>
-                <a href="${course.externalUrl || `course-player.html?id=${course.id}`}" class="btn">${(course.progress || 0) > 0 ? 'Continuer' : 'Commencer'}</a>
-            </div>
+                <a href="${course.external_url || (course.html_content ? `html-player.html?id=${course.id}` : `course-player.html?id=${course.id}`)}" class="btn">${(course.progress || 0) > 0 ? 'Continuer' : 'Commencer'}</a>     
+                       </div>
         `;
         container.appendChild(card);
     });
@@ -2133,5 +2137,61 @@ function submitEnrollmentRequest(courseId) {
     // Simulation : affichage d'un message de confirmation
     closeModal('requestEnrollmentModal');
     alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
+}
+// --- IMPORT DE COURS HTML ---
+const btnAddHtmlCourse = document.getElementById('btnAddHtmlCourse');
+const importHtmlFile = document.getElementById('importHtmlFile');
+
+if (btnAddHtmlCourse && importHtmlFile) {
+    btnAddHtmlCourse.addEventListener('click', () => {
+        importHtmlFile.click();
+    });
+
+    importHtmlFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const htmlContent = event.target.result;
+            
+            // On demande le titre du cours
+            const courseTitle = prompt("Quel est le titre de cette formation ?", file.name.replace('.html', ''));
+            if (!courseTitle) return;
+
+            const btnOriginalText = btnAddHtmlCourse.textContent;
+            btnAddHtmlCourse.textContent = "⏳ Envoi en cours...";
+            btnAddHtmlCourse.disabled = true;
+
+            // Enregistrement dans Supabase
+            const { data, error } = await supabaseClient
+                .from('courses')
+                .insert({
+                    title: courseTitle,
+                    description: "Cours interactif importé au format HTML.",
+                    theme: "Management", // Tu pourras le modifier après
+                    niveau: 1,
+                    duree: "Variable",
+                    type: "obligatoire",
+                    status: "published",
+                    visibility_mode: "assigned_only",
+                    html_content: htmlContent // <--- C'est ici qu'on stocke ton fichier !
+                })
+                .select();
+
+            if (error) {
+                alert("Erreur lors de l'import : " + error.message);
+            } else {
+                alert("✅ Formation HTML importée avec succès !");
+                await loadDataFromSupabase(); // Recharge les données
+                renderAdminCourses(); // Rafraîchit le tableau
+            }
+
+            btnAddHtmlCourse.textContent = btnOriginalText;
+            btnAddHtmlCourse.disabled = false;
+            importHtmlFile.value = ''; // Reset
+        };
+        reader.readAsText(file);
+    });
 }
 });

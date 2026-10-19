@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecteur de cours</title>
+    <!-- On charge Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f4f7f8; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .loading { display: flex; justify-content: center; align-items: center; height: 100%; font-family: sans-serif; color: #096475; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loading">Chargement du module interactif...</div>
+    <iframe id="courseFrame" style="display: none;"></iframe>
+
+    <script>
+        const SUPABASE_URL = "https://txdvluhigwkyrduqxmyr.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4ZHZsdWhpZ3dreXJkdXF4bXlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczMTYzMzEsImV4cCI6MjEwMjg5MjMzMX0.waXh6ptcSMocNPJMbF36IPGIH4E-EGdTvj9NwGoiSV0";
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadCourse() {
+            // On récupère l'ID du cours dans l'URL (ex: html-player.html?id=5)
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+
+            if (!courseId) {
+                document.getElementById('loader').textContent = "Erreur : Aucun cours spécifié.";
+                return;
+            }
+
+            // On va chercher le code HTML dans Supabase
+            const { data, error } = await supabaseClient
+                .from('courses')
+                .select('html_content')
+                .eq('id', courseId)
+                .single();
+
+            if (error || !data || !data.html_content) {
+                document.getElementById('loader').textContent = "Erreur : Impossible de charger le contenu du cours.";
+                return;
+            }
+
+            // On cache le loader et on affiche le cours
+            document.getElementById('loader').style.display = 'none';
+            const iframe = document.getElementById('courseFrame');
+            iframe.style.display = 'block';
+            
+            // On injecte le code HTML directement dans l'iframe
+            iframe.srcdoc = data.html_content;
+        }
+
+        loadCourse();
+    </script>
+</body>
+</html>
