@@ -678,6 +678,7 @@ function openAddCourseModal() {
     modules = [];
     renderModules();
     courseModalOverlay.style.display = 'flex';
+    document.getElementById('courseHtmlFile').value = '';
 }
 
 async function openEditCourseModal(courseId) {
@@ -716,8 +717,6 @@ function closeCourseModal() {
 }
 
 async function saveCourse(action) {
-    // action = 'save' | 'save_quit' | 'publish' | 'publish_assign'
-
     const title = courseTitleInput.value.trim();
     const description = courseDescriptionInput.value.trim();
     const theme = courseThemeInput.value;
@@ -735,6 +734,21 @@ async function saveCourse(action) {
         return;
     }
 
+    // --- NOUVELLE LOGIQUE D'IMPORT HTML ---
+    let htmlContent = null;
+    const fileInput = document.getElementById('courseHtmlFile');
+    
+    if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        htmlContent = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsText(file);
+        });
+    }
+    // --------------------------------------
+
     // Déterminer le statut à appliquer
     let newStatus;
     if (action === 'save' || action === 'save_quit') {
@@ -750,20 +764,23 @@ async function saveCourse(action) {
 
     const editId = courseForm.dataset.editId;
 
+    const courseData = {
+        title, description, theme, niveau, duree, type,
+        auto_inscription: autoInscription, // Corrige le bug de contrainte Supabase
+        color, syllabus,
+        modules: JSON.parse(JSON.stringify(modules)),
+        status: newStatus,
+        visibility_mode: visibilityMode,
+        availability_date: availabilityDate,
+        html_content: htmlContent // Ajout du contenu HTML (null si pas de fichier)
+    };
+
     if (editId) {
         // Mise à jour
         const courseId = parseInt(editId);
         const { error } = await supabaseClient
             .from('courses')
-            .update({
-                title, description, theme, niveau, duree, type,
-                auto_inscription: autoInscription,
-                color, syllabus,
-                modules: JSON.parse(JSON.stringify(modules)),
-                status: newStatus,
-                visibility_mode: visibilityMode,
-                availability_date: availabilityDate
-            })
+            .update(courseData)
             .eq('id', courseId);
         if (error) { alert('Erreur mise à jour : ' + error.message); return; }
     } else {
@@ -771,24 +788,20 @@ async function saveCourse(action) {
         const { error } = await supabaseClient
             .from('courses')
             .insert({
-                title, description, theme, niveau, duree, type,
-                auto_inscription: autoInscription,
+                ...courseData,
                 assigned: false,
-                color, syllabus,
-                modules: JSON.parse(JSON.stringify(modules)),
-                status: newStatus,
-                created_by: createdBy,
-                visibility_mode: visibilityMode,
-                availability_date: availabilityDate
+                created_by: createdBy
             });
         if (error) { alert('Erreur création : ' + error.message); return; }
     }
+
+    // On vide le champ file pour les prochaines fois
+    if (fileInput) fileInput.value = '';
 
     await loadDataFromSupabase();
 
     // Comportement selon l'action
     if (action === 'save') {
-        // On garde le modal ouvert. On met à jour l'editId si c'était une insertion.
         const newlyCreated = courses.find(c => c.title === title && c.status === newStatus);
         if (!editId && newlyCreated) courseForm.dataset.editId = newlyCreated.id;
         alert('Enregistré à ' + new Date().toLocaleTimeString());
@@ -801,7 +814,6 @@ async function saveCourse(action) {
     } else if (action === 'publish_assign') {
         closeCourseModal();
         renderAdminCourses();
-        // Trouver le cours publié et ouvrir la fenêtre d'affectation
         const published = courses.find(c => c.title === title && c.status === 'published');
         if (published) openAffectationModal(published.id);
     }
@@ -2137,61 +2149,5 @@ function submitEnrollmentRequest(courseId) {
     // Simulation : affichage d'un message de confirmation
     closeModal('requestEnrollmentModal');
     alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
-}
-// --- IMPORT DE COURS HTML ---
-const btnAddHtmlCourse = document.getElementById('btnAddHtmlCourse');
-const importHtmlFile = document.getElementById('importHtmlFile');
-
-if (btnAddHtmlCourse && importHtmlFile) {
-    btnAddHtmlCourse.addEventListener('click', () => {
-        importHtmlFile.click();
-    });
-
-    importHtmlFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const htmlContent = event.target.result;
-            
-            // On demande le titre du cours
-            const courseTitle = prompt("Quel est le titre de cette formation ?", file.name.replace('.html', ''));
-            if (!courseTitle) return;
-
-            const btnOriginalText = btnAddHtmlCourse.textContent;
-            btnAddHtmlCourse.textContent = "⏳ Envoi en cours...";
-            btnAddHtmlCourse.disabled = true;
-
-            // Enregistrement dans Supabase
-            const { data, error } = await supabaseClient
-                .from('courses')
-                .insert({
-                    title: courseTitle,
-                    description: "Cours interactif importé au format HTML.",
-                    theme: "Management", // Tu pourras le modifier après
-                    niveau: 1,
-                    duree: "Variable",
-                    type: "obligatoire",
-                    status: "published",
-                    visibility_mode: "assigned_only",
-                    html_content: htmlContent // <--- C'est ici qu'on stocke ton fichier !
-                })
-                .select();
-
-            if (error) {
-                alert("Erreur lors de l'import : " + error.message);
-            } else {
-                alert("✅ Formation HTML importée avec succès !");
-                await loadDataFromSupabase(); // Recharge les données
-                renderAdminCourses(); // Rafraîchit le tableau
-            }
-
-            btnAddHtmlCourse.textContent = btnOriginalText;
-            btnAddHtmlCourse.disabled = false;
-            importHtmlFile.value = ''; // Reset
-        };
-        reader.readAsText(file);
-    });
 }
 });

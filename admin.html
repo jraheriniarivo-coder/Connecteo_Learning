@@ -111,9 +111,6 @@
                 <div id="tab-cours" class="tab-content">
     <div class="admin-actions">
         <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
-        <button class="btn" id="btnAddCourse">+ Ajouter un cours manuellement</button>
-        <button class="btn" id="btnAddHtmlCourse" style="background:#096475; margin-left:10px;">📥 Importer un cours HTML</button>
-        <input type="file" id="importHtmlFile" accept=".html" style="display:none;">
     </div>
 
     <!-- Filtres de cours -->
@@ -302,13 +299,19 @@
                 <button type="button" class="btn btn-secondary" id="btnAddVideo">+ Vidéo</button>
                  <button type="button" class="btn btn-secondary" id="btnAddQuiz">+ Quiz</button>
                 </div>
-
+                 <hr style="margin: 20px 0;">
+                <h4>Importer un fichier interactif (Optionnel)</h4>
+                <p class="scale-info">Si vous importez un fichier HTML (type Articulate), il remplacera le contenu manuel ci-dessus.</p>
+                
+                <label>Fichier HTML du cours</label>
+                <input type="file" id="courseHtmlFile" accept=".html" style="margin-bottom: 20px; padding: 10px; border: 1px dashed var(--primary);">
+                
                 <div class="modal-actions">
-    <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
-    <button type="button" class="btn btn-secondary" id="btnSaveDraft">💾 Enregistrer</button>
-    <button type="button" class="btn btn-secondary" id="btnSaveAndQuit">💾 Enregistrer et quitter</button>
-    <button type="button" class="btn" id="btnPublish">🚀 Publier</button>
-    <button type="button" class="btn" id="btnPublishAndAssign">🚀 Publier et affecter</button>
+                <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
+                <button type="button" class="btn btn-secondary" id="btnSaveDraft">💾 Enregistrer</button>
+                <button type="button" class="btn btn-secondary" id="btnSaveAndQuit">💾 Enregistrer et quitter</button>
+                <button type="button" class="btn" id="btnPublish">🚀 Publier</button>
+                <button type="button" class="btn" id="btnPublishAndAssign">🚀 Publier et affecter</button>
 </div>
             </form>
         </div>
