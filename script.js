@@ -14,41 +14,7 @@ const users = [
     { username: "test2", password: "pass2", name: "Test 2", role: "apprenant" },
     { username: "admin", password: "admin", name: "Dylan", role: "admin" }
 ];
-// Notifications fictives (démo)
-const mockNotifications = [
-    {
-        id: 1,
-        nom: 'DUPONT Marie',
-        matricule: 'MAT001',
-        bu: 'Alpha',
-        fonction: 'CSA',
-        cours: 'Devenir un leader inspirant',
-        duree: '2h30',
-        raison: 'Je souhaite développer mon leadership pour mieux accompagner mon équipe au quotidien.',
-        date: '28/09/2026'
-    },
-    {
-        id: 2,
-        nom: 'MARTIN Sophie',
-        matricule: 'MAT002',
-        bu: 'Beta',
-        fonction: 'CSA',
-        cours: 'Devenir un leader inspirant',
-        duree: '2h30',
-        raison: 'Dans le cadre de mon plan de compétence, ce cours me permettrait de progresser vers le niveau suivant.',
-        date: '28/09/2026'
-    }
-];
-
-// Compteurs fictifs pour la colonne "Validés"
-const demoEnrollmentCounts = {
-    'Devenir un leader inspirant': 3
-};
-
-// Compteurs fictifs pour la colonne "Terminés"
-const demoCompletedCounts = {
-    'Devenir un leader inspirant': 1
-};
+let realNotifications = [];
 
 // ============================================
 // DONNÉES DES COURS
@@ -1827,26 +1793,61 @@ async function loadVisibilitySummary() {
 // ============================================
 // NOTIFICATIONS (CLOCHE)
 // ============================================
-function renderNotifications() {
+async function renderNotifications() {
     const list = document.getElementById('notificationList');
     if (!list) return;
+    
+    list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:30px;">Chargement...</p>';
+
+    // On récupère les demandes en attente, avec le nom du demandeur et le titre du cours
+    const { data, error } = await supabaseClient
+        .from('enrollment_requests')
+        .select(`
+            id, reason, created_at,
+            profiles:user_id (full_name, matricule, bu, fonction),
+            courses:course_id (title, duree)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(error);
+        list.innerHTML = '<p style="text-align:center;color:red;padding:30px;">Erreur de chargement.</p>';
+        return;
+    }
+
+    realNotifications = data || [];
+    
+    // Mise à jour du badge de la cloche
+    const badge = document.getElementById('bellBadge');
+    if (badge) {
+        badge.textContent = realNotifications.length;
+        badge.style.display = realNotifications.length > 0 ? 'block' : 'none';
+    }
+
     list.innerHTML = '';
-    if (mockNotifications.length === 0) {
+    if (realNotifications.length === 0) {
         list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:30px;">Aucune demande en attente.</p>';
         return;
     }
-    mockNotifications.forEach(notif => {
+
+    realNotifications.forEach(notif => {
         const div = document.createElement('div');
         div.className = 'notification-item';
+        
+        // Sécurité si le profil ou le cours a été supprimé entre temps
+        const prof = notif.profiles || {};
+        const cours = notif.courses || {};
+
         div.innerHTML = `
-            <h4>${notif.cours}</h4>
-            <div class="notif-meta"><b>Demandeur :</b> ${notif.nom}</div>
-            <div class="notif-meta"><b>Matricule :</b> ${notif.matricule}</div>
-            <div class="notif-meta"><b>BU :</b> ${notif.bu} · <b>Fonction :</b> ${notif.fonction}</div>
-            <div class="notif-meta"><b>Durée :</b> ${notif.duree} · <b>Date :</b> ${notif.date}</div>
-            <div class="notif-reason">"${notif.raison}"</div>
+            <h4>${cours.title || 'Cours inconnu'}</h4>
+            <div class="notif-meta"><b>Demandeur :</b> ${prof.full_name || 'Inconnu'}</div>
+            <div class="notif-meta"><b>Matricule :</b> ${prof.matricule || '—'}</div>
+            <div class="notif-meta"><b>BU :</b> ${prof.bu || '—'} · <b>Fonction :</b> ${prof.fonction || '—'}</div>
+            <div class="notif-meta"><b>Durée :</b> ${cours.duree || '—'}</div>
+            <div class="notif-reason">"${notif.reason}"</div>
             <div class="notif-actions">
-                <button class="notif-btn-accept" onclick="handleNotifAction(${notif.id}, 'accept')">✅ Valider</button>
+                <button class="notif-btn-accept" onclick="handleNotifAction(${notif.id}, 'accept', ${notif.user_id}, ${notif.course_id})">✅ Valider</button>
                 <button class="notif-btn-refuse" onclick="handleNotifAction(${notif.id}, 'refuse')">✕ Refuser</button>
             </div>
         `;
@@ -1856,7 +1857,10 @@ function renderNotifications() {
 
 function openNotificationPanel() {
     const panel = document.getElementById('notificationPanel');
-    if (panel) { renderNotifications(); panel.classList.add('open'); }
+    if (panel) { 
+        panel.classList.add('open'); 
+        renderNotifications(); // On charge les vraies données à l'ouverture
+    }
 }
 
 function closeNotificationPanel() {
@@ -1864,19 +1868,36 @@ function closeNotificationPanel() {
     if (panel) panel.classList.remove('open');
 }
 
-function handleNotifAction(notifId, action) {
-    const notif = mockNotifications.find(n => n.id === notifId);
-    if (!notif) return;
-    alert(action === 'accept'
-        ? '✅ Demande validée pour ' + notif.nom + '.\n\nCette personne pourra désormais accéder au cours.'
-        : '❌ Demande refusée pour ' + notif.nom + '.');
-    const index = mockNotifications.findIndex(n => n.id === notifId);
-    if (index > -1) mockNotifications.splice(index, 1);
-    const badge = document.getElementById('bellBadge');
-    if (badge) {
-        badge.textContent = mockNotifications.length;
-        if (mockNotifications.length === 0) badge.style.display = 'none';
+async function handleNotifAction(notifId, action, userId, courseId) {
+    if (action === 'accept') {
+        // 1. On inscrit officiellement l'apprenant au cours (table enrollments)
+        const { error: enrollError } = await supabaseClient
+            .from('enrollments')
+            .insert({
+                user_id: userId,
+                course_id: courseId,
+                groupe: "Validation Directe",
+                date_debut: new Date().toISOString().split('T')[0],
+                date_fin: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
+            });
+
+        if (enrollError && enrollError.code !== '23505') { // 23505 = déjà inscrit
+            alert("Erreur d'affectation : " + enrollError.message);
+            return;
+        }
+
+        // 2. On met à jour le statut de la demande
+        await supabaseClient.from('enrollment_requests').update({ status: 'approved' }).eq('id', notifId);
+        
+        alert('✅ Demande validée. L\'apprenant a maintenant accès au cours.');
+        await loadDataFromSupabase(); // Recharge les données apprenants
+    } 
+    else if (action === 'refuse') {
+        await supabaseClient.from('enrollment_requests').update({ status: 'rejected' }).eq('id', notifId);
+        alert('❌ Demande refusée.');
     }
+
+    // Rafraîchit le panneau de notifications
     renderNotifications();
 }
 
@@ -2037,7 +2058,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnExportCSV?.addEventListener('click', exportResultsToCSV);
         document.getElementById('btnDeleteAllUsers')?.addEventListener('click', deleteAllProfiles);
 
-        // 👇 AJOUTER ICI les filtres des profils 👇
+        // Filtres des profils
         document.getElementById('profileSearch')?.addEventListener('input', renderFilteredProfiles);
         document.getElementById('profileBuFilter')?.addEventListener('change', renderFilteredProfiles);
         document.getElementById('profileRoleFilter')?.addEventListener('change', renderFilteredProfiles);
@@ -2050,7 +2071,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (role) role.value = '';
             renderFilteredProfiles();
         });
-        // 👆 FIN DE L'AJOUT 👆
 
         // Boutons d'action du formulaire de cours
         document.getElementById('btnSaveDraft')?.addEventListener('click', () => saveCourse('save'));
@@ -2062,6 +2082,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('btnAddSection')?.addEventListener('click', addSectionModule);
         document.getElementById('btnAddVideo')?.addEventListener('click', addVideoModule);
         document.getElementById('btnAddQuiz')?.addEventListener('click', addQuizModule);
+        
         // Cloche
         document.getElementById('bellBtn')?.addEventListener('click', openNotificationPanel);
 
@@ -2082,7 +2103,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelector('nav a[data-section="dashboard"]')?.click();
         }
     }
-    // Demande d'inscription (mode formulaire uniquement)
+}); // <--- L'INITIALISATION SE FERME BIEN ICI
+
+
+// ============================================
+// GESTION DES DEMANDES D'INSCRIPTION (HORS INITIALISATION)
+// ============================================
+
 function requestEnrollment(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
@@ -2094,7 +2121,7 @@ function requestEnrollment(courseId) {
     }
 
     // Récupérer les infos du profil si disponibles
-    const userProfile = allProfiles.find(p => p.username === sessionUser.username) || {};
+    const userProfile = (typeof allProfiles !== 'undefined' ? allProfiles : []).find(p => p.username === sessionUser.username) || {};
 
     const modalHtml = `
         <div class="modal-overlay" id="requestEnrollmentModal">
@@ -2136,8 +2163,11 @@ function requestEnrollment(courseId) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-function submitEnrollmentRequest(courseId) {
-    const reason = document.getElementById('enrollmentReason').value.trim();
+async function submitEnrollmentRequest(courseId) {
+    const reasonInput = document.getElementById('enrollmentReason');
+    if (!reasonInput) return;
+    
+    const reason = reasonInput.value.trim();
     if (!reason) {
         alert('Veuillez indiquer une raison pour votre demande.');
         return;
@@ -2146,8 +2176,33 @@ function submitEnrollmentRequest(courseId) {
     const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
     const course = courses.find(c => c.id === courseId);
 
-    // Simulation : affichage d'un message de confirmation
-    closeModal('requestEnrollmentModal');
-    alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
+    // Récupérer l'ID de l'utilisateur dans la table profiles
+    const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('username', sessionUser.username)
+        .maybeSingle();
+
+    if (!profileData) {
+        alert("Erreur : Impossible de trouver votre profil dans la base de données.");
+        return;
+    }
+
+    // Enregistrer la demande dans Supabase (table enrollment_requests)
+    const { error } = await supabaseClient
+        .from('enrollment_requests')
+        .insert({
+            user_id: profileData.id,
+            course_id: courseId,
+            reason: reason,
+            status: 'pending'
+        });
+
+    if (error) {
+        alert("Erreur lors de l'envoi de la demande : " + error.message);
+        console.error(error);
+    } else {
+        closeModal('requestEnrollmentModal');
+        alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
+    }
 }
-});
