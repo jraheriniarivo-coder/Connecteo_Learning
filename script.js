@@ -1803,7 +1803,7 @@ async function renderNotifications() {
     const { data, error } = await supabaseClient
         .from('enrollment_requests')
         .select(`
-            id, reason, created_at,
+            id, user_id, course_id, reason, created_at,
             profiles:user_id (full_name, matricule, bu, fonction),
             courses:course_id (title, duree)
         `)
