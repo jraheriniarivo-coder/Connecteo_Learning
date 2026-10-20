@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plateforme de Formation</title>
-    <!-- Police Mada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ==================== ÉCRAN DE CONNEXION ==================== -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
             <div class="login-logo">
@@ -35,7 +32,6 @@
         </div>
     </div>
 
-    <!-- ==================== CONTENU PRINCIPAL (caché au début) ==================== -->
     <div id="mainApp" class="main-app" style="display: none;">
         <header class="topbar">
             <div class="logo">
@@ -61,7 +57,6 @@
         </header>
 
         <main class="container">
-            <!-- Section Dashboard -->
             <section id="dashboardSection" class="section active">
                 <div class="dashboard">
                     <h2>Tableau de bord</h2>
@@ -100,10 +95,8 @@
                 </div>
             </section>
 
-<!-- Section Catalogue (nouvelle version avec thématiques et niveaux) -->
 <section id="catalogueSection" class="section">
     <div class="catalogue-layout">
-        <!-- Barre latérale des thématiques -->
         <aside class="catalogue-sidebar">
             <h3>Thématiques</h3>
             <ul id="themeList">
@@ -115,7 +108,6 @@
             </ul>
         </aside>
 
-        <!-- Zone de contenu -->
         <div class="catalogue-content">
             <div class="catalogue-header">
                 <h2 id="catalogueTitle">Sélectionnez une thématique</h2>
@@ -124,13 +116,11 @@
                     <span class="search-icon">🔍</span>
                 </div>
             </div>
-            <!-- Conteneur dynamique : affiche soit les colonnes de niveaux, soit le détail d'un cours -->
             <div id="catalogueContainer"></div>
         </div>
     </div>
 </section>
 
-            <!-- Section Mes formations -->
 	<section id="mesFormationsSection" class="section">
     <div class="section-header">
         <h2>Mes formations</h2>
@@ -148,6 +138,7 @@
             <p>© 2026 Connecteo - Tous droits réservés.</p>
         </footer>
     </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>    <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

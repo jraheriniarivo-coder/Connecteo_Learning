@@ -4,17 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administration - Plateforme de Formation</title>
-    <!-- Police Mada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ==================== ÉCRAN DE CONNEXION ==================== -->
     <div id="loginScreen" class="login-screen">
         <div class="login-box">
             <div class="login-logo">
@@ -33,7 +30,6 @@
         </div>
     </div>
 
-    <!-- ==================== CONTENU PRINCIPAL ADMIN ==================== -->
     <div id="mainApp" class="main-app" style="display: none;">
         <header class="topbar">
             <div class="logo">
@@ -59,7 +55,6 @@
          </header>
 
         <main class="container">
-            <!-- Section Admin (unique) -->
             <section id="adminSection" class="section active">
                 <h2>Administration</h2>
                 <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
@@ -71,7 +66,6 @@
                     <button class="tab-btn" data-tab="resultats">Résultats</button>
                 </div>
 
-                <!-- Onglet Global (premier, actif par défaut) -->
             <div id="tab-global" class="tab-content active">
                 <h3>Tableau de bord global</h3>
             <div class="global-stats">
@@ -106,14 +100,11 @@
     </div>
 </div>
 
-
-                <!-- Onglet Gestion des cours -->
                 <div id="tab-cours" class="tab-content">
     <div class="admin-actions">
         <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
     </div>
 
-    <!-- Filtres de cours -->
     <div class="course-filters">
         <select id="filterTheme" class="filter-select"><option value="">Toutes les thématiques</option></select>
         <select id="filterTitle" class="filter-select"><option value="">Tous les titres</option></select>
@@ -147,7 +138,6 @@
     </table>
 </div>
 
-            <!-- Onglet Gestion des utilisateurs -->
       <div id="tab-utilisateurs" class="tab-content">
     <div class="admin-actions">
         <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
@@ -156,7 +146,6 @@
     </div>
     <p id="importStatus" class="import-status" style="display:none;"></p>
 
-    <!-- Filtres -->
     <div class="profiles-filters">
         <input type="text" id="profileSearch" placeholder="🔍 Rechercher un nom, un matricule..." class="filter-input">
         <select id="profileBuFilter" class="filter-select">
@@ -190,7 +179,7 @@
         </tbody>
     </table>
 </div>
-         <!-- Onglet Résultats -->
+         
 <div id="tab-resultats" class="tab-content">
     <h3>Résultats des formations</h3>
 
@@ -232,12 +221,10 @@
         </footer>
     </div>
 
-    <!-- Modal pour ajouter/modifier un cours (version enrichie) -->
     <div id="courseModalOverlay" class="modal-overlay" style="display: none;">
         <div class="modal-box" style="max-width: 800px;">
             <h3 id="courseModalTitle">Ajouter un cours</h3>
             <form id="courseForm">
-                <!-- Champs de base -->
                 <label>Titre du cours *</label>
                 <input type="text" id="courseTitle" required>
 
@@ -316,7 +303,8 @@
             </form>
         </div>
     </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>    <script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="script.js"></script>
     <div class="notification-panel" id="notificationPanel">
     <div class="notification-header">
         <h3>📨 Demandes d'inscription</h3>
