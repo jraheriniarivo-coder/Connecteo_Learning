@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connecteo LMS - Mon espace formation</title>
+    <title>Connecteo LMS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mada:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
 
     <!-- ÉCRAN DE CONNEXION -->
-    <div id="loginScreen" class="login-screen">
+    <div id="loginScreen" class="login-screen" style="display: none;">
         <div class="login-box">
             <div class="login-logo">
                 <img src="logo.svg" class="login-logo-img" alt="Logo Connecteo">
@@ -35,40 +35,42 @@
         </div>
     </div>
 
-    <!-- APPLICATION PRINCIPALE -->
-    <div id="mainApp" class="app-layout" style="display: none;">
+    <!-- CONTENU PRINCIPAL APPRENANT -->
+    <div id="mainApp" class="main-app" style="display: flex;">
         <header class="topbar">
             <div class="logo">
+                <!-- LOGO AGRANDI ICI -->
                 <img src="logo.svg" class="topbar-logo-img" alt="Logo">
-                <span class="logo-text">Connecteo LMS</span>
+                <span>Connecteo LMS</span>
             </div>
-            <nav class="main-nav">
+            <nav>
                 <a href="#" data-section="dashboard" class="active">Accueil</a>
                 <a href="#" data-section="catalogue">Catalogue</a>
                 <a href="#" data-section="mes-formations">Mes formations</a>
             </nav>
-            <div class="topbar-actions">
-                <div class="user-menu">
-                    <button class="user-menu-button" id="userMenuButton">
-                        <span class="user-avatar">👤</span>
-                        <span id="currentUser">Apprenant</span>
-                        <span class="chevron">▾</span>
-                    </button>
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="admin.html" id="goToAdmin" style="display:none;">Espace admin</a>
-                        <a href="#" id="logoutBtn">Déconnexion</a>
-                    </div>
+            <div class="user-menu">
+                <button class="user-menu-button" id="userMenuButton">
+                    <span class="user-avatar">👤</span>
+                    <span id="currentUser">Apprenant</span>
+                    <span class="chevron">▾</span>
+                </button>
+                <div class="user-dropdown" id="userDropdown">
+                    <a href="admin.html" id="goToAdmin" style="display:none;">Espace admin</a>
+                    <a href="#" id="logoutBtn">Déconnexion</a>
                 </div>
             </div>
         </header>
 
-        <main class="main-content container">
+        <main class="container">
             <!-- SECTION DASHBOARD -->
             <section id="dashboardSection" class="section active">
-                <div class="dashboard-header">
-                    <h1>Bonjour, <span id="currentUserDashboard">Apprenant</span> 👋</h1>
-                    <p>Prêt à continuer votre montée en compétences ?</p>
+                <div class="section-header">
+                    <div>
+                        <span class="eyebrow-text">Mon espace</span>
+                        <h2>Tableau de bord</h2>
+                    </div>
                 </div>
+                
                 <div class="stats-grid">
                     <div class="stat-card">
                         <span class="stat-icon">🏆</span>
@@ -103,10 +105,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="chart-container" style="margin-top: 24px;">
+
+                <div class="chart-container">
                     <h3>Progression par thématique</h3>
                     <canvas id="progressChart"></canvas>
                 </div>
+
                 <div class="progress-global">
                     <p>Progression globale</p>
                     <div class="progress-bar-container">
@@ -145,7 +149,10 @@
             <!-- SECTION MES FORMATIONS -->
             <section id="mesFormationsSection" class="section">
                 <div class="section-header">
-                    <h2>Mes formations</h2>
+                    <div>
+                        <span class="eyebrow-text">Mon parcours</span>
+                        <h2>Mes formations</h2>
+                    </div>
                     <div class="search-box">
                         <input type="text" id="searchInputMesFormations" placeholder="Rechercher dans mes formations...">
                         <span class="search-icon">🔍</span>
@@ -155,10 +162,6 @@
                 <div id="mesFormationsContainer" class="courses-grid"></div>
             </section>
         </main>
-
-        <footer class="app-footer">
-            <p>© 2026 Connecteo - Tous droits réservés.</p>
-        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
