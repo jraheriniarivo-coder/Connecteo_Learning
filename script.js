@@ -1964,7 +1964,11 @@ function getValidatedCount(course) {
     if (course.visibility_mode !== 'auto_enrollment_with_validation') {
         return '<span style="color:var(--gray);">—</span>';
     }
-    const count = demoEnrollmentCounts[course.title] || 0;
+    // On compte le nombre de participants dans les groupes (enrollments) pour ce cours
+    const count = groupes
+        .filter(g => g.coursId === course.id)
+        .reduce((total, g) => total + (g.participants ? g.participants.length : 0), 0);
+        
     return `<span style="color:var(--secondary-purple);font-weight:800;">${count}</span>`;
 }
 
@@ -1972,8 +1976,8 @@ function getCompletedCount(course) {
     if (course.visibility_mode !== 'auto_enrollment_with_validation') {
         return '<span style="color:var(--gray);">—</span>';
     }
-    const count = demoCompletedCounts[course.title] || 0;
-    return `<span style="color:var(--success, #27ae60);font-weight:800;">${count}</span>`;
+    // Pour l'instant, on affiche 0 (ou on pourra le lier à la table progress plus tard)
+    return `<span style="color:var(--success, #27ae60);font-weight:800;">0</span>`;
 }
 
 // ============================================
