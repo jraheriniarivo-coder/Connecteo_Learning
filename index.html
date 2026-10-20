@@ -3,168 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connecteo LMS</title>
+    <title>Plateforme de Formation</title>
+    <!-- Police Mada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ÉCRAN DE CONNEXION -->
-    <div id="loginScreen" class="login-screen" style="display: none;">
+    <!-- ==================== ÉCRAN DE CONNEXION ==================== -->
+    <div id="loginScreen" class="login-screen">
         <div class="login-box">
             <div class="login-logo">
-                <img src="logo.svg" class="login-logo-img" alt="Logo Connecteo">
-                <h1>Bienvenue</h1>
+                <div class="login-logo">
+    <img src="logo.svg" class="login-logo-img">
+    <h1>Bienvenue</h1>
+</div>
             </div>
             <p class="login-subtitle">Connectez-vous pour accéder à votre espace</p>
             <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">Nom d'utilisateur</label>
-                    <input type="text" id="username" required placeholder="Votre identifiant">
-                </div>
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" required placeholder="Votre mot de passe">
-                </div>
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" required placeholder="Votre identifiant">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" required placeholder="Votre mot de passe">
                 <button type="submit" class="btn-login">Se connecter</button>
                 <p id="loginError" class="login-error"></p>
             </form>
         </div>
     </div>
 
-    <!-- CONTENU PRINCIPAL APPRENANT -->
-    <div id="mainApp" class="main-app" style="display: flex;">
+    <!-- ==================== CONTENU PRINCIPAL (caché au début) ==================== -->
+    <div id="mainApp" class="main-app" style="display: none;">
         <header class="topbar">
             <div class="logo">
-                <!-- LOGO AGRANDI ICI -->
-                <img src="logo.svg" class="topbar-logo-img" alt="Logo">
-                <span>Connecteo LMS</span>
-            </div>
+ <img src="logo.svg" class="topbar-logo-img" alt="Logo">
+    <span>Bienvenue</span>
+</div>
             <nav>
-                <a href="#" data-section="dashboard" class="active">Accueil</a>
-                <a href="#" data-section="catalogue">Catalogue</a>
-                <a href="#" data-section="mes-formations">Mes formations</a>
-            </nav>
-            <div class="user-menu">
-                <button class="user-menu-button" id="userMenuButton">
-                    <span class="user-avatar">👤</span>
-                    <span id="currentUser">Apprenant</span>
-                    <span class="chevron">▾</span>
-                </button>
-                <div class="user-dropdown" id="userDropdown">
-                    <a href="admin.html" id="goToAdmin" style="display:none;">Espace admin</a>
-                    <a href="#" id="logoutBtn">Déconnexion</a>
-                </div>
-            </div>
+    <a href="#" data-section="dashboard" class="active">Accueil</a>
+    <a href="#" data-section="catalogue">Catalogue</a>
+    <a href="#" data-section="mes-formations">Mes formations</a>
+</nav>
+<div class="user-menu">
+    <button class="user-menu-button" id="userMenuButton">
+        <span class="user-avatar">👤</span>
+        <span id="currentUser"></span>
+        <span class="chevron">▾</span>
+    </button>
+    <div class="user-dropdown" id="userDropdown">
+        <a href="admin.html" id="goToAdmin" style="display:none;">Espace admin</a>
+        <a href="#" id="logoutBtn">Déconnexion</a>
+    </div>
+</div>
         </header>
 
         <main class="container">
-            <!-- SECTION DASHBOARD -->
+            <!-- Section Dashboard -->
             <section id="dashboardSection" class="section active">
-                <div class="section-header">
-                    <div>
-                        <span class="eyebrow-text">Mon espace</span>
-                        <h2>Tableau de bord</h2>
-                    </div>
+                <div class="dashboard">
+                    <h2>Tableau de bord</h2>
+                    <div class="stats">
+                <div class="stat-card">
+                    <h3>Niveau</h3>
+                <p class="value" id="statNiveau">—</p>
+                <p class="label" id="statNiveauLabel">—</p>
                 </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-icon">🏆</span>
-                        <div class="stat-info">
-                            <h3>Niveau</h3>
-                            <p class="stat-value" id="statNiveau">—</p>
-                            <p class="stat-label" id="statNiveauLabel">—</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-icon">⭐</span>
-                        <div class="stat-info">
-                            <h3>Points</h3>
-                            <p class="stat-value" id="statPoints">—</p>
-                            <p class="stat-label" id="statPointsLabel">—</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-icon">📚</span>
-                        <div class="stat-info">
-                            <h3>Formations suivies</h3>
-                            <p class="stat-value" id="statFormations">—</p>
-                            <p class="stat-label" id="statFormationsLabel">—</p>
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-icon">🎖️</span>
-                        <div class="stat-info">
-                            <h3>Badges obtenus</h3>
-                            <p class="stat-value" id="statBadges">—</p>
-                            <p class="stat-label" id="statBadgesLabel">—</p>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                <h3>Points</h3>
+                    <p class="value" id="statPoints">—</p>
+                    <p class="label" id="statPointsLabel">—</p>
                 </div>
+                <div class="stat-card">
+                 <h3>Formations suivies</h3>
+                <p class="value" id="statFormations">—</p>
+            <p class="label" id="statFormationsLabel">—</p>
+            </div>
+                 <div class="stat-card">
+                    <h3>Badges obtenus</h3>
+                    <p class="value" id="statBadges">—</p>
+                    <p class="label" id="statBadgesLabel">—</p>
+                </div>
+            </div>
 
-                <div class="chart-container">
-                    <h3>Progression par thématique</h3>
-                    <canvas id="progressChart"></canvas>
-                </div>
-
-                <div class="progress-global">
-                    <p>Progression globale</p>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="globalProgressFill" style="width: 0%;"></div>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
                     </div>
-                    <span id="globalProgressText">0%</span>
-                </div>
-            </section>
 
-            <!-- SECTION CATALOGUE -->
-            <section id="catalogueSection" class="section">
-                <div class="catalogue-layout">
-                    <aside class="catalogue-sidebar">
-                        <h3>Thématiques</h3>
-                        <ul id="themeList">
-                            <li data-theme="Management" class="active">Management</li>
-                            <li data-theme="Communication">Communication</li>
-                            <li data-theme="Commerciale">Commerciale</li>
-                            <li data-theme="Relation client">Relation client</li>
-                            <li data-theme="Soft skills">Soft skills</li>
-                        </ul>
-                    </aside>
-                    <div class="catalogue-content">
-                        <div class="catalogue-header">
-                            <h2 id="catalogueTitle">Sélectionnez une thématique</h2>
-                            <div class="search-box">
-                                <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
-                                <span class="search-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div id="catalogueContainer"></div>
+                    <div class="progress-global">
+                        <p>Progression globale</p>
+                        <div class="bar"><div class="fill" style="width: 66%;"></div></div>
+                        <span>66%</span>
                     </div>
                 </div>
             </section>
 
-            <!-- SECTION MES FORMATIONS -->
-            <section id="mesFormationsSection" class="section">
-                <div class="section-header">
-                    <div>
-                        <span class="eyebrow-text">Mon parcours</span>
-                        <h2>Mes formations</h2>
-                    </div>
-                    <div class="search-box">
-                        <input type="text" id="searchInputMesFormations" placeholder="Rechercher dans mes formations...">
-                        <span class="search-icon">🔍</span>
-                    </div>
+<!-- Section Catalogue (nouvelle version avec thématiques et niveaux) -->
+<section id="catalogueSection" class="section">
+    <div class="catalogue-layout">
+        <!-- Barre latérale des thématiques -->
+        <aside class="catalogue-sidebar">
+            <h3>Thématiques</h3>
+            <ul id="themeList">
+                <li data-theme="Management" class="active">Management</li>
+                <li data-theme="Communication">Communication</li>
+                <li data-theme="Commerciale">Commerciale</li>
+                <li data-theme="Relation client">Relation client</li>
+                <li data-theme="Soft skills">Soft skills</li>
+            </ul>
+        </aside>
+
+        <!-- Zone de contenu -->
+        <div class="catalogue-content">
+            <div class="catalogue-header">
+                <h2 id="catalogueTitle">Sélectionnez une thématique</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
+                    <span class="search-icon">🔍</span>
                 </div>
-                <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
-                <div id="mesFormationsContainer" class="courses-grid"></div>
-            </section>
-        </main>
+            </div>
+            <!-- Conteneur dynamique : affiche soit les colonnes de niveaux, soit le détail d'un cours -->
+            <div id="catalogueContainer"></div>
+        </div>
     </div>
+</section>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-    <script src="script.js"></script>
+            <!-- Section Mes formations -->
+	<section id="mesFormationsSection" class="section">
+    <div class="section-header">
+        <h2>Mes formations</h2>
+        <div class="search-box">
+            <input type="text" id="searchInputMesFormations" placeholder="Rechercher dans mes formations...">
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+    <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
+    <div id="mesFormationsContainer" class="courses-grid"></div>
+</section>
+       </main>
+
+        <footer>
+            <p>© 2026 Connecteo - Tous droits réservés.</p>
+        </footer>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>    <script src="script.js"></script>
 </body>
 </html>

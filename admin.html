@@ -3,133 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connecteo LMS</title>
+    <title>Administration - Plateforme de Formation</title>
+    <!-- Police Mada -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mada:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="loginScreen" class="login-screen" style="display: none;">
+    <!-- ==================== ÉCRAN DE CONNEXION ==================== -->
+    <div id="loginScreen" class="login-screen">
         <div class="login-box">
             <div class="login-logo">
-                <img src="logo.svg" class="login-logo-img" alt="Logo Connecteo">
+                <img src="logo.svg" class="login-logo-img">
                 <h1>Bienvenue</h1>
             </div>
-            <p class="login-subtitle">Connectez-vous pour accéder à votre espace</p>
+            <p class="login-subtitle">Espace réservé aux gestionnaires de formation</p>
             <form id="loginForm">
-                <div class="form-group">
-                    <label for="username">Nom d'utilisateur</label>
-                    <input type="text" id="username" required placeholder="Votre identifiant">
-                </div>
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" required placeholder="Votre mot de passe">
-                </div>
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" required placeholder="Votre identifiant">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" required placeholder="Votre mot de passe">
                 <button type="submit" class="btn-login">Se connecter</button>
                 <p id="loginError" class="login-error"></p>
             </form>
         </div>
     </div>
 
-    <div id="mainApp" class="app-layout" style="display: flex;">
+    <!-- ==================== CONTENU PRINCIPAL ADMIN ==================== -->
+    <div id="mainApp" class="main-app" style="display: none;">
         <header class="topbar">
             <div class="logo">
-                <!-- LOGO PETIT ICI -->
                 <img src="logo.svg" class="topbar-logo-img" alt="Logo">
-                <span>Connecteo LMS</span>
+                <span>Bienvenue</span>
             </div>
-            <nav>
-                <a href="#" data-section="dashboard" class="active">Accueil</a>
-                <a href="#" data-section="catalogue">Catalogue</a>
-                <a href="#" data-section="mes-formations">Mes formations</a>
-            </nav>
+            <div class="topbar-actions">
+                    <button class="bell-btn" id="bellBtn" title="Demandes d'inscription">
+                    🔔
+                    <span class="bell-badge" id="bellBadge">2</span>
+                </button>
             <div class="user-menu">
                 <button class="user-menu-button" id="userMenuButton">
                     <span class="user-avatar">👤</span>
-                    <span id="currentUser">Apprenant</span>
+                    <span id="currentUser"></span>
                     <span class="chevron">▾</span>
                 </button>
-                <div class="user-dropdown" id="userDropdown">
-                    <a href="admin.html" id="goToAdmin" style="display:none;">Espace admin</a>
+            <div class="user-dropdown" id="userDropdown">
+                    <a href="index.html?force=learner" id="goToLearner">Voir l'espace apprenant</a>
                     <a href="#" id="logoutBtn">Déconnexion</a>
-                </div>
             </div>
-        </header>
+            </div>
+         </header>
 
-        <main class="main-content container">
-            <section id="dashboardSection" class="section active">
-                <div class="section-header">
-                    <div>
-                        <span class="eyebrow-text">Mon espace</span>
-                        <h2>Tableau de bord</h2>
-                    </div>
-                </div>
-                
-                <div class="stats-grid">
-                    <div class="stat-card"><span class="stat-icon">🏆</span><div class="stat-info"><h3>Niveau</h3><p class="stat-value" id="statNiveau">—</p><p class="stat-label" id="statNiveauLabel">—</p></div></div>
-                    <div class="stat-card"><span class="stat-icon">⭐</span><div class="stat-info"><h3>Points</h3><p class="stat-value" id="statPoints">—</p><p class="stat-label" id="statPointsLabel">—</p></div></div>
-                    <div class="stat-card"><span class="stat-icon">📚</span><div class="stat-info"><h3>Formations suivies</h3><p class="stat-value" id="statFormations">—</p><p class="stat-label" id="statFormationsLabel">—</p></div></div>
-                    <div class="stat-card"><span class="stat-icon">🎖️</span><div class="stat-info"><h3>Badges obtenus</h3><p class="stat-value" id="statBadges">—</p><p class="stat-label" id="statBadgesLabel">—</p></div></div>
+        <main class="container">
+            <!-- Section Admin (unique) -->
+            <section id="adminSection" class="section active">
+                <h2>Administration</h2>
+                <p class="section-desc">Gérez les cours, les utilisateurs et les affectations.</p>
+
+                <div class="admin-tabs">
+                    <button class="tab-btn active" data-tab="global">Global</button>
+                    <button class="tab-btn" data-tab="cours">Gestion des cours</button>
+                    <button class="tab-btn" data-tab="utilisateurs">Gestion des utilisateurs</button>
+                    <button class="tab-btn" data-tab="resultats">Résultats</button>
                 </div>
 
-                <div class="chart-container">
-                    <h3>Progression par thématique</h3>
-                    <canvas id="progressChart"></canvas>
-                </div>
+                <!-- Onglet Global (premier, actif par défaut) -->
+            <div id="tab-global" class="tab-content active">
+                <h3>Tableau de bord global</h3>
+            <div class="global-stats">
+            <div class="stat-card">Total cours : <span id="globalTotalCours">0</span></div>
+            <div class="stat-card">Total groupes : <span id="globalTotalGroupes">0</span></div>
+            <div class="stat-card">Taux de complétion moyen : <span id="globalCompletion">0%</span></div>
+            </div>
+                      <div class="global-charts">
+           <div class="chart-container">
+                <canvas id="globalPieChart"></canvas>
+            </div>
+           <div class="chart-container">
+        <canvas id="globalBarChart"></canvas>
+    </div>
+    <div class="recap-card">
+        <h3>Récapitulatif par type de visibilité</h3>
+        <table class="admin-table" id="visibilitySummaryTable">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Cours</th>
+                    <th>Ciblés</th>
+                    <th>Terminés</th>
+                    <th>Taux</th>
+                </tr>
+            </thead>
+            <tbody id="visibilitySummaryBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+            </tbody>
+        </table>
+           </div>
+    </div>
+</div>
 
-                <div class="progress-global">
-                    <p>Progression globale</p>
-                    <div class="progress-bar-container"><div class="progress-bar-fill" id="globalProgressFill" style="width: 0%;"></div></div>
-                    <span id="globalProgressText">0%</span>
-                </div>
-            </section>
 
-            <section id="catalogueSection" class="section">
-                <div class="catalogue-layout">
-                    <aside class="catalogue-sidebar">
-                        <h3>Thématiques</h3>
-                        <ul id="themeList">
-                            <li data-theme="Management" class="active">Management</li>
-                            <li data-theme="Communication">Communication</li>
-                            <li data-theme="Commerciale">Commerciale</li>
-                            <li data-theme="Relation client">Relation client</li>
-                            <li data-theme="Soft skills">Soft skills</li>
-                        </ul>
-                    </aside>
-                    <div class="catalogue-content">
-                        <div class="catalogue-header">
-                            <h2 id="catalogueTitle">Sélectionnez une thématique</h2>
-                            <div class="search-box">
-                                <input type="text" id="searchInputCatalogue" placeholder="Rechercher une formation...">
-                                <span class="search-icon">🔍</span>
-                            </div>
-                        </div>
-                        <div id="catalogueContainer"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="mesFormationsSection" class="section">
-                <div class="section-header">
-                    <div>
-                        <span class="eyebrow-text">Mon parcours</span>
-                        <h2>Mes formations</h2>
-                    </div>
-                    <div class="search-box">
-                        <input type="text" id="searchInputMesFormations" placeholder="Rechercher dans mes formations...">
-                        <span class="search-icon">🔍</span>
-                    </div>
-                </div>
-                <p class="section-desc">Retrouvez ici vos formations assignées et en cours.</p>
-                <div id="mesFormationsContainer" class="courses-grid"></div>
-            </section>
-        </main>
+                <!-- Onglet Gestion des cours -->
+                <div id="tab-cours" class="tab-content">
+    <div class="admin-actions">
+        <button class="btn" id="btnAddCourse">+ Ajouter un cours</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-    <script src="script.js"></script>
+    <!-- Filtres de cours -->
+    <div class="course-filters">
+        <select id="filterTheme" class="filter-select"><option value="">Toutes les thématiques</option></select>
+        <select id="filterTitle" class="filter-select"><option value="">Tous les titres</option></select>
+        <select id="filterNiveau" class="filter-select"><option value="">Tous les niveaux</option></select>
+        <select id="filterDuree" class="filter-select"><option value="">Toutes les durées</option></select>
+        <select id="filterType" class="filter-select"><option value="">Tous les types</option></select>
+        <select id="filterSession" class="filter-select">
+            <option value="">Toutes les sessions</option>
+            <option value="with">Avec session(s)</option>
+            <option value="without">Sans session</option>
+        </select>
+        <button class="btn btn-secondary" id="btnResetCourseFilters">Réinitialiser</button>
+        <span class="filter-count" id="courseFilterCount"></span>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Thématique</th>
+                <th>Titre</th>
+                <th>Niveau</th>
+                <th>Durée</th>
+                <th>Type</th>
+                <th>Session</th>
+                <th>Validés</th>
+                <th>Terminés</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="adminCoursesTable"></tbody>
+    </table>
+</div>
+
+            <!-- Onglet Gestion des utilisateurs -->
+      <div id="tab-utilisateurs" class="tab-content">
+    <div class="admin-actions">
+        <input type="file" id="importUsersFile" accept=".csv" style="display: none;">
+        <button class="btn" id="btnImportUsers">📥 Importer des utilisateurs (CSV)</button>
+        <button class="btn" id="btnDeleteAllUsers" style="background:#e74c3c; margin-left:10px;">🗑️ Supprimer tous les utilisateurs</button>
+    </div>
+    <p id="importStatus" class="import-status" style="display:none;"></p>
+
+    <!-- Filtres -->
+    <div class="profiles-filters">
+        <input type="text" id="profileSearch" placeholder="🔍 Rechercher un nom, un matricule..." class="filter-input">
+        <select id="profileBuFilter" class="filter-select">
+            <option value="">Toutes les BU</option>
+        </select>
+        <select id="profileRoleFilter" class="filter-select">
+            <option value="">Tous les rôles</option>
+            <option value="admin">Admin</option>
+            <option value="formateur">Formateur</option>
+            <option value="apprenant">Apprenant</option>
+        </select>
+        <button class="btn btn-secondary" id="btnResetProfileFilters">Réinitialiser</button>
+        <span class="filter-count" id="profileCount"></span>
+    </div>
+
+    <p class="section-desc">Liste des utilisateurs enregistrés dans la base :</p>
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Nom complet</th>
+                <th>Identifiant</th>
+                <th>Matricule</th>
+                <th>BU</th>
+                <th>Fonction</th>
+                <th>Rôle</th>
+                <th style="width:80px;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="profilesTableBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>
+         <!-- Onglet Résultats -->
+<div id="tab-resultats" class="tab-content">
+    <h3>Résultats des formations</h3>
+
+    <div class="results-filters">
+        <label for="filterCourse">Filtrer par cours :</label>
+        <select id="filterCourse">
+            <option value="">Tous les cours</option>
+        </select>
+        <button class="btn" id="btnExportCSV" style="margin-left:auto;">📥 Exporter en CSV</button>
+    </div>
+
+    <div class="results-summary">
+        <div class="stat-card">Total lignes : <span id="resultsTotalCount">0</span></div>
+        <div class="stat-card">Cours terminés : <span id="resultsCompletedCount">0</span></div>
+        <div class="stat-card">Apprenants uniques : <span id="resultsUniqueUsers">0</span></div>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Apprenant</th>
+                <th>Cours</th>
+                <th>Statut</th>
+                <th>Score</th>
+                <th>Date de complétion</th>
+                <th>Affecté</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--gray);">Chargement...</td></tr>
+        </tbody>
+    </table>
+</div>       
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2026 Connecteo - Tous droits réservés.</p>
+        </footer>
+    </div>
+
+    <!-- Modal pour ajouter/modifier un cours (version enrichie) -->
+    <div id="courseModalOverlay" class="modal-overlay" style="display: none;">
+        <div class="modal-box" style="max-width: 800px;">
+            <h3 id="courseModalTitle">Ajouter un cours</h3>
+            <form id="courseForm">
+                <!-- Champs de base -->
+                <label>Titre du cours *</label>
+                <input type="text" id="courseTitle" required>
+
+                <label>Description *</label>
+                <textarea id="courseDescription" rows="3" required></textarea>
+
+                <label>Thématique *</label>
+                <select id="courseTheme" required>
+                    <option value="Management">Management</option>
+                    <option value="Communication">Communication</option>
+                    <option value="Commerciale">Commerciale</option>
+                    <option value="Relation client">Relation client</option>
+                    <option value="Soft skills">Soft skills</option>
+                </select>
+
+                <label>Niveau *</label>
+                <select id="courseNiveau" required>
+                    <option value="1">Niveau 1</option>
+                    <option value="2">Niveau 2</option>
+                    <option value="3">Niveau 3</option>
+                    <option value="4">Niveau 4</option>
+                </select>
+
+                <label>Durée *</label>
+                <input type="text" id="courseDuree" placeholder="ex: 2h" required>
+
+                <label>Type *</label>
+                <select id="courseType" required>
+                    <option value="obligatoire">Obligatoire</option>
+                    <option value="information">Information</option>
+                </select>
+
+                <label>Auto-inscription</label>
+                <input type="checkbox" id="courseAutoInscription" checked>
+
+                <label>Couleur</label>
+                <input type="color" id="courseColor" value="#00afa9">
+
+                <label>Syllabus (un point par ligne)</label>
+                <textarea id="courseSyllabus" rows="5" placeholder="Rôle et missions du manager&#10;Les styles de management"></textarea>
+                <label>Mode de visibilité *</label>
+                    <select id="courseVisibilityMode" required>
+                        <option value="assigned_only">Affectation uniquement (assigné par le formateur)</option>
+                        <option value="auto_enrollment_with_validation">Auto-inscription avec validation</option>
+                        <option value="unlock_by_progression">Déblocage par progression (montée en compétence)</option>
+                        <option value="mandatory">Obligatoire avec date limite</option>
+                        </select>
+
+                <label>Date de disponibilité (optionnel)</label>
+                    <input type="date" id="courseAvailabilityDate">
+                <hr style="margin: 20px 0;">
+                <h4>Contenu du cours</h4>
+                <p class="scale-info">Ajoutez des sections, vidéos et quiz ci-dessous.</p>
+
+                <div id="courseModulesContainer"></div>
+
+                <div class="admin-actions" style="justify-content: flex-start; gap: 10px;">
+                <button type="button" class="btn btn-secondary" id="btnAddSection">+ Section</button>
+                <button type="button" class="btn btn-secondary" id="btnAddVideo">+ Vidéo</button>
+                 <button type="button" class="btn btn-secondary" id="btnAddQuiz">+ Quiz</button>
+                </div>
+                 <hr style="margin: 20px 0;">
+                <h4>Importer un fichier interactif (Optionnel)</h4>
+                <p class="scale-info">Si vous importez un fichier HTML (type Articulate), il remplacera le contenu manuel ci-dessus.</p>
+                
+                <label>Fichier HTML du cours</label>
+                <input type="file" id="courseHtmlFile" accept=".html" style="margin-bottom: 20px; padding: 10px; border: 1px dashed var(--primary);">
+                
+                <div class="modal-actions">
+                <button type="button" class="btn" onclick="closeCourseModal()">Annuler</button>
+                <button type="button" class="btn btn-secondary" id="btnSaveDraft">💾 Enregistrer</button>
+                <button type="button" class="btn btn-secondary" id="btnSaveAndQuit">💾 Enregistrer et quitter</button>
+                <button type="button" class="btn" id="btnPublish">🚀 Publier</button>
+                <button type="button" class="btn" id="btnPublishAndAssign">🚀 Publier et affecter</button>
+</div>
+            </form>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>    <script src="script.js"></script>
+    <div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h3>📨 Demandes d'inscription</h3>
+        <button class="notification-close" onclick="closeNotificationPanel()">✕</button>
+    </div>
+    <div class="notification-list" id="notificationList"></div>
+</div>
 </body>
 </html>
