@@ -165,75 +165,84 @@ if (logoutBtn) {
 // ============================================
 async function loadDataFromSupabase() {
     let query = supabaseClient.from('courses').select('*').order('id', { ascending: true });
-if (isLearnerPage) {
-    query = query.eq('status', 'published');
-}
-const { data: coursesData, error: coursesError } = await query;
+    if (isLearnerPage) {
+        query = query.eq('status', 'published');
+    }
+    const { data: coursesData, error: coursesError } = await query;
     if (coursesError) {
         console.error('Erreur chargement cours:', coursesError);
     } else {
         courses = coursesData || [];
     }
 
-   // Charger les groupes (enrollments) avec les profils
-const { data: groupesData, error: groupesError } = await supabaseClient
-    .from('enrollments')
-    .select(`
-        id, user_id, course_id, groupe, date_debut, date_fin,
-        profiles:user_id (full_name, matricule, bu, fonction)
-    `);
-if (groupesError) {
-    console.error('Erreur chargement groupes:', groupesError);
-} else {
-    const groupsMap = {};
-    (groupesData || []).forEach(g => {
-        const key = `${g.groupe}__${g.course_id}`;
-        if (!groupsMap[key]) {
-            groupsMap[key] = {
-                id: g.id,
-                nom: g.groupe,
-                coursId: g.course_id,
-                dateDebut: g.date_debut,
-                dateFin: g.date_fin,
-                participants: []
-            };
-        }
-        if (g.profiles) {
-            groupsMap[key].participants.push({
-                user_id: g.user_id,
-                nom: g.profiles.full_name,
-                matricule: g.profiles.matricule,
-                bu: g.profiles.bu,
-                fonction: g.profiles.fonction
-            });
-        }
-    });
-    groupes = Object.values(groupsMap);
-}
+    // Charger les groupes (enrollments) avec les profils
+    const { data: groupesData, error: groupesError } = await supabaseClient
+        .from('enrollments')
+        .select(`
+            id, user_id, course_id, groupe, date_debut, date_fin,
+            profiles:user_id (full_name, matricule, bu, fonction)
+        `);
+    if (groupesError) {
+        console.error('Erreur chargement groupes:', groupesError);
+    } else {
+        const groupsMap = {};
+        (groupesData || []).forEach(g => {
+            const key = `${g.groupe}__${g.course_id}`;
+            if (!groupsMap[key]) {
+                groupsMap[key] = {
+                    id: g.id,
+                    nom: g.groupe,
+                    coursId: g.course_id,
+                    dateDebut: g.date_debut,
+                    dateFin: g.date_fin,
+                    participants: []
+                };
+            }
+            if (g.profiles) {
+                groupsMap[key].participants.push({
+                    user_id: g.user_id,
+                    nom: g.profiles.full_name,
+                    matricule: g.profiles.matricule,
+                    bu: g.profiles.bu,
+                    fonction: g.profiles.fonction
+                });
+            }
+        });
+        groupes = Object.values(groupsMap);
+    }
 
-// Charger les affectations de l'utilisateur connecté
-const sessionUserForEnroll = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-window.userEnrollments = []; // variable globale
-if (sessionUserForEnroll) {
-    // Récupérer l'id du profil à partir du username
-    const { data: profileData } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('username', sessionUserForEnroll.username)
-        .maybeSingle();
+    // Charger les affectations de l'utilisateur connecté
+    const sessionUserForEnroll = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+    window.userEnrollments = []; 
+    window.userPendingRequests = []; // Initialisation
+    
+    if (sessionUserForEnroll) {
+        const { data: profileData } = await supabaseClient
+            .from('profiles')
+            .select('id')
+            .eq('username', sessionUserForEnroll.username)
+            .maybeSingle(); // CORRIGÉ ICI
 
-           if (profileData) {
+        if (profileData) {
             const { data: enrollData } = await supabaseClient
                 .from('enrollments')
                 .select('course_id')
                 .eq('user_id', profileData.id);
             window.userEnrollments = (enrollData || []).map(e => e.course_id);
 
+            // Charger les demandes en attente
+            const { data: reqData } = await supabaseClient
+                .from('enrollment_requests')
+                .select('course_id')
+                .eq('user_id', profileData.id)
+                .eq('status', 'pending');
+            window.userPendingRequests = (reqData || []).map(r => r.course_id);
+
             // Charger la progression de l'utilisateur
             const { data: progressData, error: progressError } = await supabaseClient
                 .from('progress')
                 .select('*')
-                .eq('user_id', profileData.id);
+                .eq('user_id', profileData.id); // CORRIGÉ ICI
 
             if (progressError) {
                 console.error('Erreur chargement progression:', progressError);
@@ -339,7 +348,6 @@ function renderCatalogue() {
 
     titleEl.textContent = currentTheme;
     
-    // Filtrage : exclure les cours "assigned_only" du catalogue
     const themeCourses = courses.filter(c => 
         c.theme === currentTheme && 
         c.visibility_mode !== 'assigned_only' &&
@@ -368,7 +376,6 @@ function renderCatalogue() {
     });
 }
 
-// Fonction utilitaire pour afficher une carte du catalogue avec badge
 function renderCatalogueCard(course) {
     let badgeHtml = '';
     let lockedClass = '';
@@ -378,7 +385,6 @@ function renderCatalogueCard(course) {
             badgeHtml = '<span class="badge-mode badge-auto">🟢 Auto-inscription</span>';
             break;
         case 'unlock_by_progression':
-            const prereq = courses.find(c => c.id === course.prerequisite_course_id);
             badgeHtml = `<span class="badge-mode badge-locked">🔒 À débloquer</span>`;
             lockedClass = 'course-locked';
             break;
@@ -393,7 +399,6 @@ function renderCatalogueCard(course) {
             break;
     }
     
-    // Message prérequis pour les cours verrouillés
     let prereqMsg = '';
     if (course.visibility_mode === 'unlock_by_progression' && course.prerequisite_course_id) {
         const prereq = courses.find(c => c.id === course.prerequisite_course_id);
@@ -438,51 +443,39 @@ function renderCourseDetail(course, container, titleEl) {
                 ${(() => {
     const mode = course.visibility_mode || 'assigned_only';
     const isAssigned = window.userEnrollments && window.userEnrollments.includes(course.id);
+    const isPending = window.userPendingRequests && window.userPendingRequests.includes(course.id);
     
-    // ⬇️ LA NOUVELLE LIGNE EST ICI ⬇️
-    // On vérifie si le cours a du contenu HTML. Si oui, on pointe vers html-player.html
+    // REDIRECTION HTML PLAYER
     const playerUrl = course.html_content ? `html-player.html?id=${course.id}` : `course-player.html?id=${course.id}`;
     
-    // Priorité 1 : déblocage par progression
     if (mode === 'unlock_by_progression') {
         const prereq = courses.find(c => c.id === course.prerequisite_course_id);
         const prereqTitle = prereq ? prereq.title : 'un cours préalable';
-        // Vérifier si le prérequis est terminé
         const prereqDone = prereq && prereq.progress === 100;
         if (prereqDone) {
-            return course.external_url
-        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
+            return course.external_url ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>` : `<a href="${playerUrl}" class="btn">Commencer</a>`;
         }
         return `<button class="btn btn-disabled" disabled>🔒 À débloquer après : ${prereqTitle}</button>`;
     }
     
-    // Priorité 2 : auto-inscription avec validation
     if (mode === 'auto_enrollment_with_validation') {
-        // Si l'utilisateur est déjà inscrit/affecté, il peut commencer
         if (isAssigned) {
-            return course.external_url
-        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
+            return course.external_url ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>` : `<a href="${playerUrl}" class="btn">Commencer</a>`;
+        }
+        if (isPending) {
+            return `<button class="btn btn-disabled" disabled>⏳ Demande en attente de validation</button>`;
         }
         return `<button class="btn" onclick="requestEnrollment(${course.id})">📩 Demander l'inscription</button>`;
     }
     
-    // Priorité 3 : obligatoire ou affecté
     if (mode === 'mandatory' || isAssigned) {
-    return course.external_url
-        ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>`
-        : `<a href="${playerUrl}" class="btn">Commencer</a>`; // Utilisation de playerUrl
-        }
-    
-    // Priorité 4 : affectation uniquement (assigned_only)
-    if (mode === 'assigned_only') {
-        return isAssigned
-            ? `<a href="${playerUrl}" class="btn">Commencer</a>` // Utilisation de playerUrl
-            : `<button class="btn btn-disabled" disabled>Réservé aux personnes affectées</button>`;
+        return course.external_url ? `<a href="${course.external_url}" class="btn" target="_blank">Commencer</a>` : `<a href="${playerUrl}" class="btn">Commencer</a>`;
     }
     
-    // Fallback
+    if (mode === 'assigned_only') {
+        return isAssigned ? `<a href="${playerUrl}" class="btn">Commencer</a>` : `<button class="btn btn-disabled" disabled>Réservé aux personnes affectées</button>`;
+    }
+    
     return `<button class="btn btn-disabled" disabled>Inscription sur demande</button>`;
 })()}
             </div>
@@ -504,7 +497,6 @@ function renderMesFormations() {
     const searchInput = document.getElementById('searchInputMesFormations');
     const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
-    // Ne garder que les cours réellement affectés à l'utilisateur connecté
     const assignedCourses = courses.filter(c => 
         window.userEnrollments && window.userEnrollments.includes(c.id) &&
         (!searchTerm || c.title.toLowerCase().includes(searchTerm) || c.description.toLowerCase().includes(searchTerm))
@@ -519,7 +511,6 @@ function renderMesFormations() {
     const now = new Date();
 
     assignedCourses.forEach(course => {
-        // Déterminer le badge et l'état
         let badgeHtml = '';
         let extraInfo = '';
 
@@ -533,6 +524,9 @@ function renderMesFormations() {
                 extraInfo = `<div class="deadline-info">📅 À terminer avant le ${deadline.toLocaleDateString('fr-FR')}</div>`;
             }
         }
+
+        // REDIRECTION HTML PLAYER
+        const playerUrl = course.external_url || (course.html_content ? `html-player.html?id=${course.id}` : `course-player.html?id=${course.id}`);
 
         const card = document.createElement('div');
         card.className = 'course-card';
@@ -552,12 +546,13 @@ function renderMesFormations() {
                 <div class="course-progress">
                     <div class="fill" style="width: ${course.progress || 0}%;"></div>
                 </div>
-                <a href="${course.external_url || (course.html_content ? `html-player.html?id=${course.id}` : `course-player.html?id=${course.id}`)}" class="btn">${(course.progress || 0) > 0 ? 'Continuer' : 'Commencer'}</a>     
-                       </div>
+                <a href="${playerUrl}" class="btn">${(course.progress || 0) > 0 ? 'Continuer' : 'Commencer'}</a>     
+            </div>
         `;
         container.appendChild(card);
     });
 }
+
 // ============================================
 // ADMIN : GESTION DES COURS
 // ============================================
@@ -567,10 +562,10 @@ function renderAdminCourses() {
     tbody.innerHTML = '';
 
     const filteredCourses = applyCourseFilters();
-const countEl = document.getElementById('courseFilterCount');
-if (countEl) countEl.textContent = `${filteredCourses.length} / ${courses.length} cours`;
+    const countEl = document.getElementById('courseFilterCount');
+    if (countEl) countEl.textContent = `${filteredCourses.length} / ${courses.length} cours`;
 
-filteredCourses.forEach(course => {
+    filteredCourses.forEach(course => {
         const tr = document.createElement('tr');
         const sessionCount = groupes.filter(g => g.coursId === course.id).length;
 
@@ -644,14 +639,13 @@ function openAddCourseModal() {
     modules = [];
     renderModules();
     courseModalOverlay.style.display = 'flex';
-    document.getElementById('courseHtmlFile').value = '';
+    document.getElementById('courseHtmlFile').value = ''; // Reset file
 }
 
 async function openEditCourseModal(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
 
-    // Mémoriser le statut précédent et passer le cours en "editing" pour le retirer du catalogue
     courseForm.dataset.previousStatus = course.status || 'draft';
     if (course.status === 'published') {
         await supabaseClient.from('courses').update({ status: 'editing' }).eq('id', courseId);
@@ -674,6 +668,7 @@ async function openEditCourseModal(courseId) {
     modules = course.modules ? JSON.parse(JSON.stringify(course.modules)) : [];
     renderModules();
 
+    document.getElementById('courseHtmlFile').value = ''; // Reset file
     courseForm.dataset.editId = courseId;
     courseModalOverlay.style.display = 'flex';
 }
@@ -700,7 +695,7 @@ async function saveCourse(action) {
         return;
     }
 
-    // --- NOUVELLE LOGIQUE D'IMPORT HTML ---
+    // GESTION DU FICHIER HTML
     let htmlContent = null;
     const fileInput = document.getElementById('courseHtmlFile');
     
@@ -713,9 +708,7 @@ async function saveCourse(action) {
             reader.readAsText(file);
         });
     }
-    // --------------------------------------
 
-    // Déterminer le statut à appliquer
     let newStatus;
     if (action === 'save' || action === 'save_quit') {
         newStatus = (courseForm.dataset.previousStatus && courseForm.dataset.previousStatus !== 'editing')
@@ -727,30 +720,32 @@ async function saveCourse(action) {
 
     const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
     const createdBy = sessionUser ? sessionUser.name : 'Inconnu';
-
     const editId = courseForm.dataset.editId;
 
     const courseData = {
         title, description, theme, niveau, duree, type,
-        auto_inscription: autoInscription, // Corrige le bug de contrainte Supabase
+        auto_inscription: autoInscription,
         color, syllabus,
         modules: JSON.parse(JSON.stringify(modules)),
         status: newStatus,
         visibility_mode: visibilityMode,
         availability_date: availabilityDate,
-        html_content: htmlContent // Ajout du contenu HTML (null si pas de fichier)
+        html_content: htmlContent
     };
 
     if (editId) {
-        // Mise à jour
         const courseId = parseInt(editId);
-        const { error } = await supabaseClient
-            .from('courses')
-            .update(courseData)
-            .eq('id', courseId);
-        if (error) { alert('Erreur mise à jour : ' + error.message); return; }
+        // Si un nouveau fichier est importé, on l'ajoute. Sinon on garde l'ancien.
+        if (htmlContent) {
+            const { error } = await supabaseClient.from('courses').update(courseData).eq('id', courseId);
+            if (error) { alert('Erreur mise à jour : ' + error.message); return; }
+        } else {
+            // On supprime html_content de la mise à jour pour ne pas l'écraser avec null
+            delete courseData.html_content;
+            const { error } = await supabaseClient.from('courses').update(courseData).eq('id', courseId);
+            if (error) { alert('Erreur mise à jour : ' + error.message); return; }
+        }
     } else {
-        // Insertion
         const { error } = await supabaseClient
             .from('courses')
             .insert({
@@ -761,12 +756,9 @@ async function saveCourse(action) {
         if (error) { alert('Erreur création : ' + error.message); return; }
     }
 
-    // On vide le champ file pour les prochaines fois
     if (fileInput) fileInput.value = '';
-
     await loadDataFromSupabase();
 
-    // Comportement selon l'action
     if (action === 'save') {
         const newlyCreated = courses.find(c => c.title === title && c.status === newStatus);
         if (!editId && newlyCreated) courseForm.dataset.editId = newlyCreated.id;
@@ -784,8 +776,9 @@ async function saveCourse(action) {
         if (published) openAffectationModal(published.id);
     }
 }
+
 // ============================================
-// MODULES DU COURS
+// MODULES DU COURS (Fix focus)
 // ============================================
 function addSectionModule() {
     modules.push({ type: 'section', title: '', content: '' });
@@ -1009,7 +1002,6 @@ async function showAffectationList(courseId) {
     const container = document.getElementById('affectationContent');
     container.innerHTML = '<p style="text-align:center;">Chargement...</p>';
 
-    // Charger les profils réels depuis Supabase
     const { data: profiles, error } = await supabaseClient
         .from('profiles')
         .select('*')
@@ -1020,7 +1012,6 @@ async function showAffectationList(courseId) {
         return;
     }
 
-    // Filtrer sur les apprenants (pas les admins)
     const collaborateurs = profiles.filter(p => p.role !== 'admin');
 
     let html = `<p>Filtrer par BU : 
@@ -1054,7 +1045,6 @@ async function showAffectationList(courseId) {
         });
         if (selectedIds.length === 0) { alert('Sélectionnez au moins un participant'); return; }
 
-        // Enregistrer dans Supabase
         const rows = selectedIds.map(userId => ({
             user_id: userId,
             course_id: courseId,
@@ -1118,14 +1108,14 @@ function setupAdminTabs() {
             if (targetEl) targetEl.classList.add('active');
 
             if (target === 'cours') {
-    renderAdminCourses();
+                renderAdminCourses();
             } else if (target === 'global') {
-    renderGlobalDashboard();
+                renderGlobalDashboard();
             } else if (target === 'resultats') {
-    loadResults();
+                loadResults();
             } else if (target === 'utilisateurs') {
-    loadProfiles();
-}
+                loadProfiles();
+            }
         });
     });
 }
@@ -1159,7 +1149,6 @@ if (importUsersFile) {
             try {
                 const text = event.target.result;
 
-                // Détection automatique du séparateur (; ou ,)
                 const firstLine = text.split('\n')[0];
                 const separator = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
 
@@ -1168,9 +1157,7 @@ if (importUsersFile) {
                     throw new Error('Fichier vide ou invalide.');
                 }
 
-                // En-têtes
                 const headers = lines[0].split(separator).map(h => h.trim().toLowerCase().replace(/^\ufeff/, ''));
-                // Le \ufeff est le BOM UTF-8 qui peut se retrouver en début de fichier
 
                 const requiredColumns = ['username', 'full_name', 'matricule', 'bu', 'fonction', 'role'];
                 const missing = requiredColumns.filter(c => !headers.includes(c));
@@ -1178,7 +1165,6 @@ if (importUsersFile) {
                     throw new Error(`Colonnes manquantes : ${missing.join(', ')}`);
                 }
 
-                // Préparation des données
                 const rows = [];
                 for (let i = 1; i < lines.length; i++) {
                     const values = lines[i].split(separator).map(v => v.trim());
@@ -1187,12 +1173,11 @@ if (importUsersFile) {
                         row[h] = values[idx] || '';
                     });
 
-                    // Normalisation
                     row.role = (row.role || 'apprenant').toLowerCase();
                     row.username = (row.username || '').trim();
                     row.full_name = (row.full_name || '').trim();
 
-                    if (!row.username) continue; // ignorer les lignes sans username
+                    if (!row.username) continue;
 
                     rows.push(row);
                 }
@@ -1206,8 +1191,6 @@ if (importUsersFile) {
                     statusEl.textContent = `⏳ Envoi de ${rows.length} utilisateurs vers Supabase...`;
                 }
 
-                // Upsert dans Supabase
-                // onConflict: 'username' → met à jour si l'username existe déjà
                 const { error } = await supabaseClient
                     .from('profiles')
                     .upsert(rows, { onConflict: 'username' });
@@ -1219,7 +1202,6 @@ if (importUsersFile) {
                     statusEl.textContent = `✅ ${rows.length} utilisateur(s) importé(s) ou mis à jour avec succès.`;
                 }
 
-                // Recharger la liste
                 await loadProfiles();
 
             } catch (err) {
@@ -1229,7 +1211,6 @@ if (importUsersFile) {
                     statusEl.textContent = '❌ Erreur : ' + err.message;
                 }
             } finally {
-                // Réinitialiser l'input pour permettre le ré-import du même fichier
                 importUsersFile.value = '';
             }
         };
@@ -1245,19 +1226,10 @@ if (importUsersFile) {
     });
 }
 
-function renderImportedUsers() {
-    if (!importedUsersList) return;
-    importedUsersList.innerHTML = '';
-    importedUsers.forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = `${user.nom || ''} ${user.prenom || ''} - ${user.fonction || ''} - ${user.bu || ''}`;
-        importedUsersList.appendChild(li);
-    });
-}
 // ============================================
-// ADMIN : LISTE DES PROFILS (avec filtres)
+// ADMIN : LISTE DES PROFILS
 // ============================================
-let allProfiles = []; // cache des profils chargés
+let allProfiles = []; 
 
 async function loadProfiles() {
     if (!isAdminPage) return;
@@ -1278,11 +1250,7 @@ async function loadProfiles() {
     }
 
     allProfiles = data || [];
-
-    // Remplir le filtre BU avec les valeurs uniques
     populateBuFilter();
-
-    // Afficher tous les profils au départ
     renderFilteredProfiles();
 }
 
@@ -1345,7 +1313,6 @@ function renderFilteredProfiles() {
             tbody.appendChild(tr);
         });
 
-        // Câbler les boutons de suppression
         tbody.querySelectorAll('.btn-delete-row').forEach(btn => {
             btn.addEventListener('click', () => deleteProfile(btn.dataset.id, btn.dataset.name));
         });
@@ -1355,33 +1322,24 @@ function renderFilteredProfiles() {
         countEl.textContent = `${filtered.length} / ${allProfiles.length} utilisateur(s)`;
     }
 }
-// ============================================
-// SUPPRESSION D'UN UTILISATEUR
-// ============================================
+
 async function deleteProfile(id, name) {
     if (!confirm(`Supprimer définitivement l'utilisateur "${name}" ?\n\nAttention : ses affectations et sa progression seront également supprimées.`)) {
         return;
     }
 
-    // Supprimer les dépendances (progress, enrollments)
     await supabaseClient.from('progress').delete().eq('user_id', id);
     await supabaseClient.from('enrollments').delete().eq('user_id', id);
 
-    // Supprimer le profil
     const { error } = await supabaseClient.from('profiles').delete().eq('id', id);
 
     if (error) {
         alert('Erreur suppression : ' + error.message);
         return;
     }
-
-    // Rafraîchir
     await loadProfiles();
 }
 
-// ============================================
-// SUPPRESSION DE TOUS LES UTILISATEURS
-// ============================================
 async function deleteAllProfiles() {
     const count = allProfiles.length;
     if (count === 0) {
@@ -1405,7 +1363,6 @@ async function deleteAllProfiles() {
         statusEl.style.display = 'block';
     }
 
-    // Supprimer toutes les dépendances puis les profils
     await supabaseClient.from('progress').delete().not('id', 'is', null);
     await supabaseClient.from('enrollments').delete().not('id', 'is', null);
     const { error } = await supabaseClient.from('profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -1425,6 +1382,7 @@ async function deleteAllProfiles() {
 
     await loadProfiles();
 }
+
 function renderGlobalDashboard() {
     if (!isAdminPage) return;
     const totalCoursEl = document.getElementById('globalTotalCours');
@@ -1487,8 +1445,7 @@ function renderGlobalDashboard() {
             }
         });
     }
-    // Charger le récapitulatif par type
-loadVisibilitySummary();
+    loadVisibilitySummary();
 }
 
 // ============================================
@@ -1496,30 +1453,19 @@ loadVisibilitySummary();
 // ============================================
 function renderDashboard() {
     if (!isLearnerPage) return;
-    const container = document.getElementById('mesFormationsContainer');
     
-    // Calculs dynamiques
     const totalAssignes = courses.filter(c => window.userEnrollments.includes(c.id)).length;
     const totalTermines = courses.filter(c => window.userEnrollments.includes(c.id) && c.progress === 100).length;
     const progression = totalAssignes > 0 ? Math.round((totalTermines / totalAssignes) * 100) : 0;
     
-    // Niveau : 1 par défaut, +1 tous les 3 cours terminés (max 5)
     const niveau = Math.min(5, 1 + Math.floor(totalTermines / 3));
     const labelsNiveau = {
-        1: 'Manager débutant',
-        2: 'Manager en développement',
-        3: 'Manager confirmé',
-        4: 'Manager avancé',
-        5: 'Manager expert'
+        1: 'Manager débutant', 2: 'Manager en développement', 3: 'Manager confirmé', 4: 'Manager avancé', 5: 'Manager expert'
     };
     
-    // Points : 100 par cours terminé
     const points = totalTermines * 100;
-    
-    // Badges : 1 par cours terminé
     const badges = totalTermines;
     
-    // Mise à jour de l'interface
     document.getElementById('statNiveau').textContent = niveau;
     document.getElementById('statNiveauLabel').textContent = labelsNiveau[niveau];
     
@@ -1532,7 +1478,6 @@ function renderDashboard() {
     document.getElementById('statBadges').textContent = badges;
     document.getElementById('statBadgesLabel').textContent = badges > 0 ? '🏅'.repeat(Math.min(badges, 5)) : 'Aucun badge';
     
-    // Barre de progression globale
     const fill = document.querySelector('.progress-global .fill');
     const span = document.querySelector('.progress-global span');
     if (fill && span) {
@@ -1540,7 +1485,6 @@ function renderDashboard() {
         span.textContent = progression + '%';
     }
     
-    // Graphique par thématique
     const themes = ['Management', 'Communication', 'Commerciale', 'Relation client', 'Soft skills'];
     const themeProgress = themes.map(theme => {
         const themeCourses = courses.filter(c => c.theme === theme && window.userEnrollments.includes(c.id));
@@ -1567,20 +1511,18 @@ function renderDashboard() {
             options: {
                 responsive: true,
                 plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } }
-                }
+                scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
             }
         });
     }
 }
+
 // ============================================
 // ADMIN : RÉSULTATS
 // ============================================
 async function loadResults() {
     if (!isAdminPage) return;
 
-    // Charger toutes les lignes de progress
     const { data: progressData, error } = await supabaseClient
         .from('progress')
         .select('*')
@@ -1596,7 +1538,6 @@ async function loadResults() {
 
     const rows = progressData || [];
 
-    // Remplir le filtre par cours
     if (filterCourseSelect) {
         const currentFilter = filterCourseSelect.value;
         filterCourseSelect.innerHTML = '<option value="">Tous les cours</option>';
@@ -1609,13 +1550,11 @@ async function loadResults() {
         });
     }
 
-    // Filtrage
     const selectedCourseId = filterCourseSelect ? filterCourseSelect.value : '';
     const filtered = selectedCourseId
         ? rows.filter(r => String(r.course_id) === String(selectedCourseId))
         : rows;
 
-    // Mise à jour des compteurs
     const completedCount = filtered.filter(r => r.completed === true).length;
     const uniqueUsers = new Set(filtered.map(r => r.user_id)).size;
 
@@ -1623,7 +1562,6 @@ async function loadResults() {
     if (resultsCompletedCount) resultsCompletedCount.textContent = completedCount;
     if (resultsUniqueUsers) resultsUniqueUsers.textContent = uniqueUsers;
 
-    // Remplissage du tableau
     if (!resultsTableBody) return;
     resultsTableBody.innerHTML = '';
 
@@ -1635,10 +1573,12 @@ async function loadResults() {
     filtered.forEach(r => {
         const course = courses.find(c => c.id === r.course_id);
         const courseTitle = course ? course.title : `Cours #${r.course_id}`;
+        const profile = allProfiles.find(p => p.id === r.user_id) || {};
+        const userName = profile.full_name || profile.username || r.user_id;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${r.user_id}</td>
+            <td>${userName}</td>
             <td>${courseTitle}</td>
             <td><span class="status-badge ${r.completed ? 'completed' : 'inprogress'}">${r.completed ? 'Terminé' : 'En cours'}</span></td>
             <td>${r.score != null ? r.score + '%' : '—'}</td>
@@ -1648,11 +1588,10 @@ async function loadResults() {
         resultsTableBody.appendChild(tr);
     });
 }
+
 function exportResultsToCSV() {
     const now = new Date();
     const dateStr = now.toLocaleString('fr-FR');
-
-    // Récupérer les données actuelles depuis la table affichée
     const rows = [];
     rows.push(['RAPPORT DE FORMATION - Export du ' + dateStr]);
     rows.push([]);
@@ -1671,25 +1610,16 @@ function exportResultsToCSV() {
             const score = cells[3].textContent.trim();
             const date = cells[4].textContent.trim();
 
-            // Enrichir avec les infos du profil et du cours
-            const profile = allProfiles.find(p => p.username === userId) || {};
+            const profile = allProfiles.find(p => p.full_name === userId || p.username === userId) || {};
             const course = courses.find(c => c.title === courseTitle) || {};
 
             rows.push([
-                profile.full_name || userId,
-                profile.matricule || '',
-                profile.bu || '',
-                profile.fonction || '',
-                courseTitle,
-                course.theme || '',
-                statut,
-                score,
-                date
+                profile.full_name || userId, profile.matricule || '', profile.bu || '', profile.fonction || '',
+                courseTitle, course.theme || '', statut, score, date
             ]);
         }
     });
 
-    // Synthèse
     rows.push([]);
     rows.push(['SYNTHÈSE']);
     rows.push(['Total lignes', tbody.querySelectorAll('tr').length]);
@@ -1705,13 +1635,10 @@ function exportResultsToCSV() {
     link.click();
     URL.revokeObjectURL(url);
 }
-// ============================================
-// RÉCAPITULATIF PAR TYPE DE VISIBILITÉ
-// ============================================
+
 async function loadVisibilitySummary() {
     if (!isAdminPage || !visibilitySummaryBody) return;
 
-    // Récupérer toutes les données utiles
     const [progressRes, enrollmentsRes] = await Promise.all([
         supabaseClient.from('progress').select('*'),
         supabaseClient.from('enrollments').select('*')
@@ -1720,7 +1647,6 @@ async function loadVisibilitySummary() {
     const progressData = progressRes.data || [];
     const enrollmentsData = enrollmentsRes.data || [];
 
-    // Libellés lisibles pour chaque type
     const typeLabels = {
         'assigned_only': 'Affectation uniquement',
         'auto_enrollment_with_validation': 'Auto-inscription validée',
@@ -1728,39 +1654,31 @@ async function loadVisibilitySummary() {
         'mandatory': 'Obligatoire avec échéance'
     };
 
-    // Initialisation des compteurs
     const stats = {};
     Object.keys(typeLabels).forEach(type => {
         stats[type] = { courses: 0, targeted: 0, completed: 0 };
     });
 
-    // Comptage par type
     courses.forEach(course => {
         const type = course.visibility_mode || 'assigned_only';
         if (!stats[type]) stats[type] = { courses: 0, targeted: 0, completed: 0 };
         stats[type].courses += 1;
 
-        // Ciblés : nombre d'enrollments pour ce cours (en attendant les vrais)
         const targeted = enrollmentsData.filter(e => e.course_id === course.id).length;
         stats[type].targeted += targeted;
 
-        // Terminés : lignes de progress avec completed=true
         const completed = progressData.filter(p => p.course_id === course.id && p.completed === true).length;
         stats[type].completed += completed;
     });
 
-    // Remplissage du tableau
     visibilitySummaryBody.innerHTML = '';
-
     let hasRows = false;
 
     Object.keys(typeLabels).forEach(type => {
         const s = stats[type];
-        // N'afficher que les types qui ont au moins un cours
         if (s.courses === 0) return;
         hasRows = true;
 
-        // Calcul du taux
         let rateText = '—';
         let rateClass = '';
         if (s.targeted > 0) {
@@ -1770,7 +1688,6 @@ async function loadVisibilitySummary() {
             else if (rate >= 40) rateClass = 'rate-medium';
             else rateClass = 'rate-low';
         } else if (s.completed > 0) {
-            // Pas d'affectation, mais des gens ont terminé
             rateText = '100% (auto)';
             rateClass = 'rate-good';
         }
@@ -1790,6 +1707,7 @@ async function loadVisibilitySummary() {
         visibilitySummaryBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);">Aucun cours pour le moment.</td></tr>';
     }
 }
+
 // ============================================
 // NOTIFICATIONS (CLOCHE)
 // ============================================
@@ -1799,7 +1717,6 @@ async function renderNotifications() {
     
     list.innerHTML = '<p style="text-align:center;color:var(--gray);padding:30px;">Chargement...</p>';
 
-    // On récupère les demandes en attente, avec le nom du demandeur et le titre du cours
     const { data, error } = await supabaseClient
         .from('enrollment_requests')
         .select(`
@@ -1818,7 +1735,6 @@ async function renderNotifications() {
 
     realNotifications = data || [];
     
-    // Mise à jour du badge de la cloche
     const badge = document.getElementById('bellBadge');
     if (badge) {
         badge.textContent = realNotifications.length;
@@ -1835,7 +1751,6 @@ async function renderNotifications() {
         const div = document.createElement('div');
         div.className = 'notification-item';
         
-        // Sécurité si le profil ou le cours a été supprimé entre temps
         const prof = notif.profiles || {};
         const cours = notif.courses || {};
 
@@ -1847,7 +1762,7 @@ async function renderNotifications() {
             <div class="notif-meta"><b>Durée :</b> ${cours.duree || '—'}</div>
             <div class="notif-reason">"${notif.reason}"</div>
             <div class="notif-actions">
-                <button class="notif-btn-accept" onclick="handleNotifAction(${notif.id}, 'accept', ${notif.user_id}, ${notif.course_id})">✅ Valider</button>
+                <button class="notif-btn-accept" onclick="handleNotifAction(${notif.id}, 'accept', '${notif.user_id}', ${notif.course_id})">✅ Valider</button>
                 <button class="notif-btn-refuse" onclick="handleNotifAction(${notif.id}, 'refuse')">✕ Refuser</button>
             </div>
         `;
@@ -1859,7 +1774,7 @@ function openNotificationPanel() {
     const panel = document.getElementById('notificationPanel');
     if (panel) { 
         panel.classList.add('open'); 
-        renderNotifications(); // On charge les vraies données à l'ouverture
+        renderNotifications();
     }
 }
 
@@ -1870,7 +1785,6 @@ function closeNotificationPanel() {
 
 async function handleNotifAction(notifId, action, userId, courseId) {
     if (action === 'accept') {
-        // 1. On inscrit officiellement l'apprenant au cours (table enrollments)
         const { error: enrollError } = await supabaseClient
             .from('enrollments')
             .insert({
@@ -1881,39 +1795,42 @@ async function handleNotifAction(notifId, action, userId, courseId) {
                 date_fin: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0]
             });
 
-        if (enrollError && enrollError.code !== '23505') { // 23505 = déjà inscrit
+        if (enrollError && enrollError.code !== '23505') { 
             alert("Erreur d'affectation : " + enrollError.message);
             return;
         }
 
-        // 2. On met à jour le statut de la demande
         await supabaseClient.from('enrollment_requests').update({ status: 'approved' }).eq('id', notifId);
         
         alert('✅ Demande validée. L\'apprenant a maintenant accès au cours.');
-        await loadDataFromSupabase(); // Recharge les données apprenants
+        await loadDataFromSupabase();
     } 
     else if (action === 'refuse') {
         await supabaseClient.from('enrollment_requests').update({ status: 'rejected' }).eq('id', notifId);
         alert('❌ Demande refusée.');
     }
 
-    // Rafraîchit le panneau de notifications
     renderNotifications();
 }
 
 // ============================================
-// DEMANDE D'INSCRIPTION (FORMULAIRE)
+// GESTION DES DEMANDES D'INSCRIPTION
 // ============================================
 function requestEnrollment(courseId) {
     const course = courses.find(c => c.id === courseId);
     if (!course) return;
+
     const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    if (!sessionUser) { alert('Vous devez être connecté.'); return; }
+    if (!sessionUser) {
+        alert('Vous devez être connecté pour faire une demande.');
+        return;
+    }
+
     const userProfile = (typeof allProfiles !== 'undefined' ? allProfiles : []).find(p => p.username === sessionUser.username) || {};
 
-    const html = `
+    const modalHtml = `
         <div class="modal-overlay" id="requestEnrollmentModal">
-            <div class="modal-box" style="max-width:600px;">
+            <div class="modal-box" style="max-width: 600px;">
                 <h3>📩 Demande d'inscription</h3>
                 <p style="font-size:0.9rem;color:var(--gray);margin-bottom:20px;">Votre demande sera transmise à l'administrateur pour validation.</p>
 
@@ -1946,15 +1863,53 @@ function requestEnrollment(courseId) {
             </div>
         </div>
     `;
-    document.body.insertAdjacentHTML('beforeend', html);
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-function submitEnrollmentRequest(courseId) {
-    const reason = document.getElementById('enrollmentReason').value.trim();
-    if (!reason) { alert('Veuillez indiquer une raison pour votre demande.'); return; }
+async function submitEnrollmentRequest(courseId) {
+    const reasonInput = document.getElementById('enrollmentReason');
+    if (!reasonInput) return;
+    
+    const reason = reasonInput.value.trim();
+    if (!reason) {
+        alert('Veuillez indiquer une raison pour votre demande.');
+        return;
+    }
+
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
     const course = courses.find(c => c.id === courseId);
-    closeModal('requestEnrollmentModal');
-    alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
+
+    const { data: profileData } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('username', sessionUser.username)
+        .maybeSingle();
+
+    if (!profileData) {
+        alert("Erreur : Impossible de trouver votre profil dans la base de données.");
+        return;
+    }
+
+    const { error } = await supabaseClient
+        .from('enrollment_requests')
+        .insert({
+            user_id: profileData.id,
+            course_id: courseId,
+            reason: reason,
+            status: 'pending'
+        });
+
+    if (error) {
+        alert("Erreur lors de l'envoi de la demande : " + error.message);
+        console.error(error);
+    } else {
+        closeModal('requestEnrollmentModal');
+        alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.`);
+        
+        // Rafraichit l'interface pour bloquer le bouton
+        await loadDataFromSupabase();
+        renderCatalogue(); 
+    }
 }
 
 // ============================================
@@ -1964,7 +1919,6 @@ function getValidatedCount(course) {
     if (course.visibility_mode !== 'auto_enrollment_with_validation') {
         return '<span style="color:var(--gray);">—</span>';
     }
-    // On compte le nombre de participants dans les groupes (enrollments) pour ce cours
     const count = groupes
         .filter(g => g.coursId === course.id)
         .reduce((total, g) => total + (g.participants ? g.participants.length : 0), 0);
@@ -1976,7 +1930,6 @@ function getCompletedCount(course) {
     if (course.visibility_mode !== 'auto_enrollment_with_validation') {
         return '<span style="color:var(--gray);">—</span>';
     }
-    // Pour l'instant, on affiche 0 (ou on pourra le lier à la table progress plus tard)
     return `<span style="color:var(--success, #27ae60);font-weight:800;">0</span>`;
 }
 
@@ -1991,7 +1944,6 @@ function populateCourseFilters() {
     const typeSelect = document.getElementById('filterType');
     if (!themeSelect || !titleSelect) return;
 
-    // Conserver la valeur sélectionnée
     const keep = {
         theme: themeSelect.value, title: titleSelect.value,
         niveau: niveauSelect.value, duree: dureeSelect.value, type: typeSelect.value
@@ -2049,20 +2001,19 @@ function resetCourseFilters() {
     });
     renderAdminCourses();
 }
+
 // ============================================
-// INITIALISATION
+// INITIALISATION (Fermé correctement)
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
     await checkSession();
 
     if (isAdminPage) {
-        // Empêcher la soumission par défaut (touche Entrée)
         courseForm?.addEventListener('submit', (e) => e.preventDefault());
         filterCourseSelect?.addEventListener('change', loadResults);
         btnExportCSV?.addEventListener('click', exportResultsToCSV);
         document.getElementById('btnDeleteAllUsers')?.addEventListener('click', deleteAllProfiles);
 
-        // Filtres des profils
         document.getElementById('profileSearch')?.addEventListener('input', renderFilteredProfiles);
         document.getElementById('profileBuFilter')?.addEventListener('change', renderFilteredProfiles);
         document.getElementById('profileRoleFilter')?.addEventListener('change', renderFilteredProfiles);
@@ -2076,21 +2027,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderFilteredProfiles();
         });
 
-        // Boutons d'action du formulaire de cours
         document.getElementById('btnSaveDraft')?.addEventListener('click', () => saveCourse('save'));
         document.getElementById('btnSaveAndQuit')?.addEventListener('click', () => saveCourse('save_quit'));
         document.getElementById('btnPublish')?.addEventListener('click', () => saveCourse('publish'));
         document.getElementById('btnPublishAndAssign')?.addEventListener('click', () => saveCourse('publish_assign'));
 
-        // Boutons de modules
         document.getElementById('btnAddSection')?.addEventListener('click', addSectionModule);
         document.getElementById('btnAddVideo')?.addEventListener('click', addVideoModule);
         document.getElementById('btnAddQuiz')?.addEventListener('click', addQuizModule);
         
-        // Cloche
         document.getElementById('bellBtn')?.addEventListener('click', openNotificationPanel);
 
-        // Filtres des cours
         document.getElementById('filterTheme')?.addEventListener('change', renderAdminCourses);
         document.getElementById('filterTitle')?.addEventListener('change', renderAdminCourses);
         document.getElementById('filterNiveau')?.addEventListener('change', renderAdminCourses);
@@ -2107,106 +2054,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelector('nav a[data-section="dashboard"]')?.click();
         }
     }
-}); // <--- L'INITIALISATION SE FERME BIEN ICI
-
-
-// ============================================
-// GESTION DES DEMANDES D'INSCRIPTION (HORS INITIALISATION)
-// ============================================
-
-function requestEnrollment(courseId) {
-    const course = courses.find(c => c.id === courseId);
-    if (!course) return;
-
-    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    if (!sessionUser) {
-        alert('Vous devez être connecté pour faire une demande.');
-        return;
-    }
-
-    // Récupérer les infos du profil si disponibles
-    const userProfile = (typeof allProfiles !== 'undefined' ? allProfiles : []).find(p => p.username === sessionUser.username) || {};
-
-    const modalHtml = `
-        <div class="modal-overlay" id="requestEnrollmentModal">
-            <div class="modal-box" style="max-width: 600px;">
-                <h3>📩 Demande d'inscription</h3>
-                <p style="font-size:0.9rem;color:var(--gray);margin-bottom:20px;">Votre demande sera transmise à l'administrateur pour validation.</p>
-
-                <div style="background:var(--gray-light);border-radius:8px;padding:15px;margin-bottom:20px;">
-                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📋 Informations du demandeur</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">
-                        <div><b>Nom :</b> ${sessionUser.name || '—'}</div>
-                        <div><b>Identifiant :</b> ${sessionUser.username || '—'}</div>
-                        <div><b>Matricule :</b> ${userProfile.matricule || '—'}</div>
-                        <div><b>BU :</b> ${userProfile.bu || '—'}</div>
-                        <div><b>Fonction :</b> ${userProfile.fonction || '—'}</div>
-                    </div>
-                </div>
-
-                <div style="background:var(--primary-light);border-radius:8px;padding:15px;margin-bottom:20px;">
-                    <div style="font-weight:800;color:var(--primary-dark);font-size:1rem;margin-bottom:10px;">📚 Formation demandée</div>
-                    <div style="font-size:0.9rem;">
-                        <div><b>Titre :</b> ${course.title}</div>
-                        <div><b>Durée :</b> ${course.duree}</div>
-                        <div><b>Thématique :</b> ${course.theme}</div>
-                    </div>
-                </div>
-
-                <label style="display:block;font-weight:700;color:var(--gray-dark);margin-bottom:8px;">Raison de la demande <span style="color:#e74c3c;">*</span></label>
-                <textarea id="enrollmentReason" rows="4" placeholder="Expliquez brièvement pourquoi vous souhaitez suivre cette formation..." style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:8px;font-family:'Mada',sans-serif;font-size:0.95rem;margin-bottom:15px;"></textarea>
-
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeModal('requestEnrollmentModal')">Annuler</button>
-                    <button class="btn" onclick="submitEnrollmentRequest(${courseId})">📨 Envoyer la demande</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
-async function submitEnrollmentRequest(courseId) {
-    const reasonInput = document.getElementById('enrollmentReason');
-    if (!reasonInput) return;
-    
-    const reason = reasonInput.value.trim();
-    if (!reason) {
-        alert('Veuillez indiquer une raison pour votre demande.');
-        return;
-    }
-
-    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    const course = courses.find(c => c.id === courseId);
-
-    // Récupérer l'ID de l'utilisateur dans la table profiles
-    const { data: profileData } = await supabaseClient
-        .from('profiles')
-        .select('id')
-        .eq('username', sessionUser.username)
-        .maybeSingle();
-
-    if (!profileData) {
-        alert("Erreur : Impossible de trouver votre profil dans la base de données.");
-        return;
-    }
-
-    // Enregistrer la demande dans Supabase (table enrollment_requests)
-    const { error } = await supabaseClient
-        .from('enrollment_requests')
-        .insert({
-            user_id: profileData.id,
-            course_id: courseId,
-            reason: reason,
-            status: 'pending'
-        });
-
-    if (error) {
-        alert("Erreur lors de l'envoi de la demande : " + error.message);
-        console.error(error);
-    } else {
-        closeModal('requestEnrollmentModal');
-        alert(`✅ Votre demande pour "${course.title}" a bien été envoyée à l'administrateur.\n\nVous serez notifié(e) une fois votre demande validée.`);
-    }
-}
+});
