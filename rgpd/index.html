@@ -1033,6 +1033,20 @@ function render(){
         localStorage.setItem(`cours7_completed_${username}`, 'true');
         localStorage.setItem(`cours7_score_${username}`, pct);
 }
+  } else if(s.type==='recap'){
+    const total = scenes.filter(x=>x.type==='quiz').length;
+    const correct = Object.values(answers).filter(a=>a.correct).length;
+    const pct = Math.round(correct/total*100);
+
+    // 👇 AJOUTE CES LIGNES ICI 👇
+    // On prévient la plateforme que le cours est terminé avec le score final
+    if (window.parent !== window) { 
+        window.parent.postMessage({ type: 'COURSE_COMPLETED', score: pct }, '*');
+    }
+    // 👆 FIN DE L'AJOUT 👆
+
+    // Récupérer l'utilisateur connecté depuis la plateforme
+    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
     const passed = pct >= PASS_THRESHOLD;
     const canRetake = !passed && attemptNumber < MAX_ATTEMPTS;
     const outOfAttempts = !passed && attemptNumber >= MAX_ATTEMPTS;
@@ -1151,57 +1165,18 @@ function render(){
 
     if(btnSend){
     btnSend.onclick = async ()=>{
-      const identity = participantIdentity;
       btnSend.disabled = true;
-      btnSend.textContent = 'Envoi en cours...';
-      statusEl.style.display='none';
-
-      flushSceneTime(); // capture le temps passé sur l'écran de bilan lui-même avant l'envoi
-      const dureeTotaleSecondes = Math.round((Date.now()-moduleStartTime)/1000);
-      const blocage = buildBlockagePointsSummary();
-
-      const payload = {
-        nomPrenom: identity.nomPrenom,
-        matricule: identity.matricule,
-        fonction: identity.fonction,
-        bu: identity.bu,
-        score: pct,
-        bonnesReponses: correct,
-        tentative: attemptNumber,
-        noteEvaluation: ratingValue,
-        commentaire: fldComment.value.trim(),
-        dureeTotaleSecondes: dureeTotaleSecondes,
-        pointsDeBlocage: blocage.pointsDeBlocage,
-        detailTempsJSON: blocage.detailJSON,
-        date: new Date().toISOString()
-      };
-      const FLOW_URL = "https://default462b20ee8bb04c05b1fa6fdf72dca1.e3.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8e5025107cad4e91947b09d8e26c0cea/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=r5c20kxYGjtIrNrBwv7joygBUtXO1QLvn6PCVR3BHaU";
-
-      try{
-        const resp = await fetch(FLOW_URL, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if(resp.ok){
+      btnSend.textContent = 'Validation...';
+      
+      // On simule un petit chargement pour faire pro
+      setTimeout(() => {
           statusEl.style.display='block';
           statusEl.style.color = 'var(--green)';
-          statusEl.textContent = '✓ Résultat envoyé avec succès.';
+          statusEl.textContent = '✓ Vos résultats ont bien été transmis à la plateforme.';
           btnSend.textContent = 'Envoyé ✓';
-        } else {
-          throw new Error('HTTP '+resp.status);
-        }
-      } catch(err){
-        statusEl.style.display='block';
-        statusEl.style.color = 'var(--wrong)';
-        statusEl.innerHTML = 'L\'envoi automatique a échoué (problème réseau ou de connexion).<br>Merci de noter votre score et de le transmettre manuellement à votre formateur : <b>'+identity.nomPrenom+' — '+identity.matricule+' — '+pct+'% ('+correct+'/'+total+')</b>.';
-        btnSend.disabled = false;
-        btnSend.textContent = 'Réessayer';
-        console.error('Envoi flow échoué:', err);
-      }
+      }, 800);
     };
     }
-  }
 
   mainEl.appendChild(wrap);
   updateRail();

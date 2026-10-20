@@ -509,31 +509,14 @@ function validateQuiz() {
     document.getElementById('btnValidateQuiz').disabled = true;
 
     if (passed) {
-        saveProgressToSupabase(percent);
+        // 👇 On prévient la plateforme au lieu d'envoyer à Supabase directement
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'COURSE_COMPLETED', score: percent }, '*');
+        }
         showCertificate(percent);
     } else {
-        setTimeout(() => {
-            alert('Score insuffisant. Revoyez le module et réessayez.');
-            goTo(0);
-        }, 1500);
-    }
 }
 
-// ============================================
-// SAUVEGARDE PROGRESSION
-// ============================================
-async function saveProgressToSupabase(percent) {
-    const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
-    if (!sessionUser) return;
-    const { error } = await supabaseClient.from('progress').upsert({
-        user_id: sessionUser.username,
-        course_id: COURS_ID,
-        completed: true,
-        score: percent,
-        completed_at: new Date().toISOString()
-    }, { onConflict: 'user_id,course_id' });
-    if (error) console.error('Erreur sauvegarde:', error);
-}
 
 // ============================================
 // CERTIFICAT

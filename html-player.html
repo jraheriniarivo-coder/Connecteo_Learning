@@ -54,6 +54,46 @@
         }
 
         loadCourse();
+        // ÉCOUTEUR DE FIN DE COURS
+window.addEventListener('message', async function(event) {
+    // On vérifie que le message vient bien de notre cours
+    if (event.data && event.data.type === 'COURSE_COMPLETED') {
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('id');
+        const sessionUser = JSON.parse(localStorage.getItem('sessionUser') || 'null');
+
+        if (sessionUser && courseId) {
+            // 1. On récupère le VRAI ID (UUID) de l'utilisateur dans Supabase
+            const { data: profileData } = await supabaseClient
+                .from('profiles')
+                .select('id')
+                .eq('username', sessionUser.username)
+                .maybeSingle();
+
+            if (profileData) {
+                // 2. On enregistre la progression avec le bon ID
+                const { error } = await supabaseClient
+                    .from('progress')
+                    .upsert({ 
+                        user_id: profileData.id, // <-- LE CORRECTIF EST ICI
+                        course_id: courseId, 
+                        completed: true, 
+                        score: event.data.score || 100,
+                        completed_at: new Date().toISOString()
+                    }, { onConflict: 'user_id, course_id' });
+
+                if (!error) {
+                    alert("🎉 Félicitations, votre progression a été enregistrée !");
+                    window.location.href = "index.html?force=learner#mes-formations";
+                } else {
+                    console.error(error);
+                    alert("Erreur lors de l'enregistrement.");
+                }
+            }
+        }
+    }
+});
     </script>
 </body>
 </html>
