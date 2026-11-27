@@ -1,0 +1,6 @@
+{
+  "name": "Connecteo Formation — Plateforme LMS",
+  "description": "Plateforme professionnelle de gestion des formations, catalogue par niveaux, import HTML interactif et suivi des résultats Connecteo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
